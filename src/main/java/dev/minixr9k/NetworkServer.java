@@ -6,6 +6,9 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -18,13 +21,18 @@ public class NetworkServer {
     }
 
     public void start() {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        boolean useEpoll = Epoll.isAvailable();
+
+        System.out.println("[Network] Ивент-луп выбран: " + (useEpoll ? "Epoll (Linux Native)" : "NIO (Java)"));
+
+        // 1. Создаем группы потоков в зависимости от ОС
+        EventLoopGroup bossGroup = useEpoll ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = useEpoll ? new EpollEventLoopGroup(4) : new NioEventLoopGroup(4);
 
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
+                    .channel(useEpoll ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) {

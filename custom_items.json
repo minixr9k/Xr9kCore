@@ -1,0 +1,11 @@
+{
+  "items": {
+    "lockpick": {
+      "material": "stick",
+      "modelData": 1,
+      "path": "/models/lockpick.png",
+      "customName": "Отмычка",
+      "customLore": ""
+    }
+  }
+}

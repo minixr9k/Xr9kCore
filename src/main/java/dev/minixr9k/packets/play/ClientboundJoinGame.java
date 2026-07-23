@@ -1,5 +1,6 @@
 package dev.minixr9k.packets.play;
 
+import dev.minixr9k.types.GameMode;
 import dev.minixr9k.utils.MinecraftPacket;
 import io.netty.buffer.ByteBuf;
 
@@ -7,6 +8,13 @@ import static dev.minixr9k.utils.ProtocolUtils.writeString;
 import static dev.minixr9k.utils.ProtocolUtils.writeVarInt;
 
 public class ClientboundJoinGame implements MinecraftPacket {
+
+    private final GameMode gameMode;
+
+    public ClientboundJoinGame(GameMode gameMode) {
+        this.gameMode = gameMode;
+    }
+
     @Override
     public void write(ByteBuf out, int protocolVersion) {
         out.writeInt(1);         // Entity ID
@@ -16,9 +24,9 @@ public class ClientboundJoinGame implements MinecraftPacket {
         writeVarInt(out, 1);
         writeString(out, "minecraft:overworld");
 
-        writeVarInt(out, 10);    // Max Players
-        writeVarInt(out, 8);     // View Distance
-        writeVarInt(out, 8);     // Simulation Distance
+        writeVarInt(out, 10);    // Max Players (unused)
+        writeVarInt(out, 12);     // View Distance
+        writeVarInt(out, 12);     // Simulation Distance
         out.writeBoolean(false); // Reduced Debug Info
         out.writeBoolean(true);  // Enable Respawn Screen
         out.writeBoolean(false); // Do Limited Crafting
@@ -27,7 +35,7 @@ public class ClientboundJoinGame implements MinecraftPacket {
         writeString(out, "minecraft:overworld");
 
         out.writeLong(0L);       // Hashed Seed
-        out.writeByte(2);        // Gamemode (1 - Creative)
+        out.writeByte(gameMode.getId());        // Gamemode (1 - Creative)
         out.writeByte(-1);       // Previous Gamemode
         out.writeBoolean(false); // Is Debug
         out.writeBoolean(false); // Is Flat

@@ -19,7 +19,7 @@ public class ServerboundKnownPacksResponse implements MinecraftPacket {
             String id = ProtocolUtils.readString(in);
             String version = ProtocolUtils.readString(in);
 
-            System.out.printf("Pack: %s %s %s", namespace, id, version);
+//            System.out.printf("Pack: %s %s %s", namespace, id, version);
         }
     }
 

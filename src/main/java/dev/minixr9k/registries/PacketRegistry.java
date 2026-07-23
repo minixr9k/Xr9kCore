@@ -1,5 +1,6 @@
 package dev.minixr9k.registries;
 
+import dev.minixr9k.packets.confAndPlay.serverbound.ServerboundPluginMessage;
 import dev.minixr9k.packets.configuration.serverbound.ServerboundFinishConfiguration;
 import dev.minixr9k.packets.configuration.serverbound.ServerboundKnownPacksResponse;
 import dev.minixr9k.packets.handshake.Handshake;
@@ -22,6 +23,7 @@ public class PacketRegistry {
         loginPackets.put(0x00, ServerboundLoginStart.class);
         loginPackets.put(0x03, ServerboundLoginAck.class);
 
+        configurationPackets.put(0x02, ServerboundPluginMessage.class);
         configurationPackets.put(0x03, ServerboundFinishConfiguration.class);
         configurationPackets.put(0x07, ServerboundKnownPacksResponse.class);
     }

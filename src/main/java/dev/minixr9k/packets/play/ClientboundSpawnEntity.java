@@ -1,5 +1,6 @@
 package dev.minixr9k.packets.play;
 
+import dev.minixr9k.registries.EntityRegistry;
 import dev.minixr9k.utils.MinecraftPacket;
 import dev.minixr9k.utils.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
@@ -11,7 +12,7 @@ public class ClientboundSpawnEntity implements MinecraftPacket {
 
     private final int entityId;
     private final UUID entityUuid;
-    private final int type;
+    private final String type;
     private final double x;
     private final double y;
     private final double z;
@@ -23,7 +24,7 @@ public class ClientboundSpawnEntity implements MinecraftPacket {
     private final short velocityY;
     private final short velocityZ;
 
-    public ClientboundSpawnEntity(int entityId, UUID entityUuid, int type,
+    public ClientboundSpawnEntity(int entityId, UUID entityUuid, String type,
                                   double x, double y, double z,
                                   float yaw, float pitch, float headYaw,
                                   int data, double vx, double vy, double vz) {
@@ -49,7 +50,8 @@ public class ClientboundSpawnEntity implements MinecraftPacket {
     public void write(ByteBuf out, int protocolVersion) {
         writeVarInt(out, entityId);
         ProtocolUtils.writeUUID(out, entityUuid);
-        writeVarInt(out, type);
+        int entityType = EntityRegistry.getEntity(type, protocolVersion);
+        writeVarInt(out, entityType);
 
         out.writeDouble(x);
         out.writeDouble(y);
@@ -75,6 +77,6 @@ public class ClientboundSpawnEntity implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
-        return 0x01; // Spawn Entity ID для Play состояния
+        return 0x01;
     }
 }

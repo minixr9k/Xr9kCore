@@ -1,20 +1,25 @@
 package dev.minixr9k.packets.play;
 
+import dev.minixr9k.types.MetadataEntry;
 import dev.minixr9k.utils.MinecraftPacket;
 import io.netty.buffer.ByteBuf;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static dev.minixr9k.utils.ProtocolUtils.*;
 
 public class ClientboundSetEntityMetadata implements MinecraftPacket {
 
     private final int entityId;
-    private final String customName;
-    private final boolean isNameVisible;
+    private final List<MetadataEntry<?>> entries = new ArrayList<>();
 
-    public ClientboundSetEntityMetadata(int entityId, String customName, boolean isNameVisible) {
+    public ClientboundSetEntityMetadata(int entityId) {
         this.entityId = entityId;
-        this.customName = customName;
-        this.isNameVisible = isNameVisible;
+    }
+
+    public void add(MetadataEntry<?> entry) {
+        entries.add(entry);
     }
 
     @Override
@@ -24,19 +29,20 @@ public class ClientboundSetEntityMetadata implements MinecraftPacket {
     public void write(ByteBuf out, int protocolVersion) {
         writeVarInt(out, entityId);
 
-        // 2: Custom Name (Optional Component)
-        // "Optional Component" имеет ID 6
-        writeVarInt(out, 2);
-        writeVarInt(out, 6); // Serializer ID: Optional Component
-        out.writeBoolean(true); // Есть данные
+        for (MetadataEntry<?> entry : entries) {
+            entry.write(out, protocolVersion);
+        }
 
-        writeTextComponent(out, customName);
-
-        // 3: Is Custom Name Visible (Boolean)
-        // "Boolean" имеет ID 8
-        writeVarInt(out, 3);
-        writeVarInt(out, 8); // Serializer ID: Boolean
-        out.writeBoolean(isNameVisible);
+//        writeVarInt(out, 2);
+//        writeVarInt(out, 6); // Serializer ID: Optional Component
+//        out.writeBoolean(true); // Есть данные
+//        writeTextComponent(out, customName);
+//
+//        // 3: Is Custom Name Visible (Boolean)
+//        // "Boolean" имеет ID 8
+//        writeVarInt(out, 3);
+//        writeVarInt(out, 8); // Serializer ID: Boolean
+//        out.writeBoolean(isNameVisible);
 
         // Конец метаданных
         out.writeByte(0xFF);

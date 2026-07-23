@@ -13,13 +13,22 @@ public interface MinecraftPacket {
 
     default void send(io.netty.channel.ChannelHandlerContext ctx, int protocolVersion) {
         ByteBuf data = ctx.alloc().buffer();
-        writeVarInt(data, getPacketId(protocolVersion));
-        this.write(data, protocolVersion);
+        try {
+            writeVarInt(data, getPacketId(protocolVersion));
+            this.write(data, protocolVersion);
 
-        ByteBuf header = ctx.alloc().buffer();
-        writeVarInt(header, data.readableBytes());
+            int packetLength = data.readableBytes();
 
-        ctx.write(header);
-        ctx.writeAndFlush(data);
+            // Выделяем финальный буфер [Длина] + [Данные]
+            ByteBuf packet = ctx.alloc().buffer();
+
+            writeVarInt(packet, packetLength);
+            packet.writeBytes(data);
+
+            ctx.writeAndFlush(packet);
+
+        } finally {
+            data.release();
+        }
     }
 }

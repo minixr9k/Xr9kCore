@@ -37,7 +37,7 @@ public class ClientboundChunkWithLight implements MinecraftPacket {
                 chunkDataBuf.writeByte(0);  // biome singular
 
                 if (protocolVersion >= 770) {
-                    writeVarInt(chunkDataBuf, 40); // plains
+                    writeVarInt(chunkDataBuf, 0); // plains
                 } else {
                     writeVarInt(chunkDataBuf, 0);
                 }

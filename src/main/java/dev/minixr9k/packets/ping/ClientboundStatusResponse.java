@@ -1,5 +1,6 @@
 package dev.minixr9k.packets.ping;
 
+import dev.minixr9k.features.World;
 import dev.minixr9k.utils.MinecraftPacket;
 import io.netty.buffer.ByteBuf;
 
@@ -12,7 +13,7 @@ public class ClientboundStatusResponse implements MinecraftPacket {
 
     @Override
     public void write(ByteBuf out, int protocolVersion) {
-        String status = "{\"version\":{\"name\":\"MiniCore\",\"protocol\":" + protocolVersion + "},\"players\":{\"max\":" + 1 + ",\"online\":" + 0 + "},\"description\":{\"text\":\"" + "kek" + "\"}}";
+        String status = "{\"version\":{\"name\":\"MiniCore\",\"protocol\":" + protocolVersion + "},\"players\":{\"max\":" + -1 + ",\"online\":" + World.getAllPlayers().size() + "},\"description\":{\"text\":\"" + "A MiniCore server (1.21.8)" + "\"}}";
         writeString(out, status);
     }
 

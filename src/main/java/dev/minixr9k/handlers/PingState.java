@@ -19,13 +19,20 @@ public class PingState extends SimpleChannelInboundHandler<ByteBuf> {
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf in) {
         int packetId = ProtocolUtils.readVarInt(in);
 
+        int packetLength = in.readableBytes();
+
+        if (packetLength > 8) {
+            System.out.println("[Xr9kCore] Пакет слишком огромный! (Ping)");
+            ctx.close();
+            return;
+        }
+
         if (packetId == 0x00) { // status_request
             new ClientboundStatusResponse().send(ctx, protocolVersion);
-            new ClientboundPong().send(ctx, protocolVersion);
-            ctx.close();
         }
         else if (packetId == 0x01) {
-
+            new ClientboundPong().send(ctx, protocolVersion);
+            ctx.close();
         }
         else {
             ctx.close();

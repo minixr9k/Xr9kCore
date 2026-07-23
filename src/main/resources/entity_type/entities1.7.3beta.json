@@ -1,0 +1,49 @@
+{
+  "minecraft:entity_type": {
+    "default": "minecraft:pig",
+    "entries": {
+      "minecraft:creeper": {
+        "protocol_id": 50
+      },
+      "minecraft:skeleton": {
+        "protocol_id": 51
+      },
+      "minecraft:spider": {
+        "protocol_id": 52
+      },
+      "minecraft:giant": {
+        "protocol_id": 53
+      },
+      "minecraft:zombie": {
+        "protocol_id": 54
+      },
+      "minecraft:slime": {
+        "protocol_id": 55
+      },
+      "minecraft:ghast": {
+        "protocol_id": 56
+      },
+      "minecraft:zombified_piglin": {
+        "protocol_id": 57
+      },
+      "minecraft:pig": {
+        "protocol_id": 90
+      },
+      "minecraft:sheep": {
+        "protocol_id": 91
+      },
+      "minecraft:cow": {
+        "protocol_id": 92
+      },
+      "minecraft:chicken": {
+        "protocol_id": 93
+      },
+      "minecraft:squid": {
+        "protocol_id": 94
+      },
+      "minecraft:wolf": {
+        "protocol_id": 95
+      }
+    }
+  }
+}

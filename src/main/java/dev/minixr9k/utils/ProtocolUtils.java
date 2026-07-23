@@ -1,5 +1,6 @@
 package dev.minixr9k.utils;
 
+import com.google.gson.*;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.StandardCharsets;
@@ -51,10 +52,60 @@ public class ProtocolUtils {
     }
 
     public static void writeTextComponent(ByteBuf buf, String message){
+        if (message.contains("\"text\":")) {
+            writeColoredTextComponent(buf, message);
+            return;
+        }
         buf.writeByte(8); // Тип тега String
         byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
         buf.writeShort(messageBytes.length);
         buf.writeBytes(messageBytes);
+    }
+
+    public static void writeColoredTextComponent(ByteBuf buf, String message) {
+        JsonArray jsonArray = JsonParser.parseString(message).getAsJsonArray();
+
+        // NBT List (ID 9)
+        buf.writeByte(9);
+
+        // TAG_Compound (ID 10)
+        buf.writeByte(10);
+
+        // list count (int)
+        buf.writeInt(jsonArray.size());
+
+        for (JsonElement el : jsonArray) {
+            JsonObject obj = el.getAsJsonObject();
+            String text = obj.get("text").getAsString();
+
+            // NBT String (ID 8)
+            buf.writeByte(8);
+            writeNbtField(buf, "text", text);
+
+            if (obj.has("color")) {
+                String color = obj.get("color").getAsString();
+
+                // NBT String (ID 8)
+                buf.writeByte(8);
+                writeNbtField(buf, "color", color);
+            }
+
+            // TAG_End (ID 0)
+            buf.writeByte(0);
+        }
+    }
+
+    // Вспомогательный метод для записи структуры "Имя поля" + "Значение"
+    private static void writeNbtField(ByteBuf buf, String key, String value) {
+        writeStringValue(buf, key);
+        writeStringValue(buf, value);
+    }
+
+    // Утилита для записи строки в формате Minecraft NBT (Размер short + байты)
+    private static void writeStringValue(ByteBuf buf, String value) {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        buf.writeShort(bytes.length);
+        buf.writeBytes(bytes);
     }
 
     public static void writeBitSet(ByteBuf buf, BitSet bitSet) {
@@ -81,5 +132,12 @@ public class ProtocolUtils {
         byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
         buf.writeShort(bytes.length);
         buf.writeBytes(bytes);
+    }
+
+    public static String readStringWithShort(ByteBuf buf) {
+        int len = buf.readShort();
+        byte[] bytes = new byte[len];
+        buf.readBytes(bytes);
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 }

@@ -1,0 +1,325 @@
+{
+  "minecraft:item": {
+    "default": "minecraft:stick",
+    "entries": {
+      "minecraft:iron_shovel": {
+        "protocol_id": 256
+      },
+      "minecraft:iron_pickaxe": {
+        "protocol_id": 257
+      },
+      "minecraft:iron_axe": {
+        "protocol_id": 258
+      },
+      "minecraft:": {
+        "protocol_id": 259
+      },
+      "minecraft:apple": {
+        "protocol_id": 260
+      },
+      "minecraft:bow": {
+        "protocol_id": 261
+      },
+      "minecraft:arrow": {
+        "protocol_id": 262
+      },
+      "minecraft:coal": {
+        "protocol_id": 263
+      },
+      "minecraft:diamond": {
+        "protocol_id": 264
+      },
+      "minecraft:iron_ingot": {
+        "protocol_id": 265
+      },
+      "minecraft:gold_ingot": {
+        "protocol_id": 266
+      },
+      "minecraft:iron_sword": {
+        "protocol_id": 267
+      },
+      "minecraft:wooden_sword": {
+        "protocol_id": 268
+      },
+      "minecraft:wooden_shovel": {
+        "protocol_id": 269
+      },
+      "minecraft:wooden_pickaxe": {
+        "protocol_id": 270
+      },
+      "minecraft:wooden_axe": {
+        "protocol_id": 271
+      },
+      "minecraft:stone_sword": {
+        "protocol_id": 272
+      },
+      "minecraft:stone_shovel": {
+        "protocol_id": 273
+      },
+      "minecraft:stone_pickaxe": {
+        "protocol_id": 274
+      },
+      "minecraft:stone_axe": {
+        "protocol_id": 275
+      },
+      "minecraft:diamond_sword": {
+        "protocol_id": 276
+      },
+      "minecraft:diamond_shovel": {
+        "protocol_id": 277
+      },
+      "minecraft:diamond_pickaxe": {
+        "protocol_id": 278
+      },
+      "minecraft:diamond_axe": {
+        "protocol_id": 279
+      },
+      "minecraft:stick": {
+        "protocol_id": 280
+      },
+      "minecraft:bowl": {
+        "protocol_id": 281
+      },
+      "minecraft:mushroom_stew": {
+        "protocol_id": 282
+      },
+      "minecraft:golden_sword": {
+        "protocol_id": 283
+      },
+      "minecraft:golden_shovel": {
+        "protocol_id": 284
+      },
+      "minecraft:golden_pickaxe": {
+        "protocol_id": 285
+      },
+      "minecraft:golden_axe": {
+        "protocol_id": 286
+      },
+      "minecraft:string": {
+        "protocol_id": 287
+      },
+      "minecraft:feather": {
+        "protocol_id": 288
+      },
+      "minecraft:gunpowder": {
+        "protocol_id": 289
+      },
+      "minecraft:wooden_hoe": {
+        "protocol_id": 290
+      },
+      "minecraft:stone_hoe": {
+        "protocol_id": 291
+      },
+      "minecraft:iron_hoe": {
+        "protocol_id": 292
+      },
+      "minecraft:diamond_hoe": {
+        "protocol_id": 293
+      },
+      "minecraft:golden_hoe": {
+        "protocol_id": 294
+      },
+      "minecraft:wheat_seeds": {
+        "protocol_id": 295
+      },
+      "minecraft:wheat": {
+        "protocol_id": 296
+      },
+      "minecraft:bread": {
+        "protocol_id": 297
+      },
+      "minecraft:leather_helmet": {
+        "protocol_id": 298
+      },
+      "minecraft:leather_chestplate": {
+        "protocol_id": 299
+      },
+      "minecraft:leather_leggings": {
+        "protocol_id": 300
+      },
+      "minecraft:leather_boots": {
+        "protocol_id": 301
+      },
+      "minecraft:chainmail_helmet": {
+        "protocol_id": 302
+      },
+      "minecraft:chainmail_chestplate": {
+        "protocol_id": 303
+      },
+      "minecraft:chainmail_leggings": {
+        "protocol_id": 304
+      },
+      "minecraft:chainmail_boots": {
+        "protocol_id": 305
+      },
+      "minecraft:iron_helmet": {
+        "protocol_id": 306
+      },
+      "minecraft:iron_chestplate": {
+        "protocol_id": 307
+      },
+      "minecraft:iron_leggings": {
+        "protocol_id": 308
+      },
+      "minecraft:iron_boots": {
+        "protocol_id": 309
+      },
+      "minecraft:diamond_helmet": {
+        "protocol_id": 310
+      },
+      "minecraft:diamond_chestplate": {
+        "protocol_id": 311
+      },
+      "minecraft:diamond_leggings": {
+        "protocol_id": 312
+      },
+      "minecraft:diamond_boots": {
+        "protocol_id": 313
+      },
+      "minecraft:golden_helmet": {
+        "protocol_id": 314
+      },
+      "minecraft:golden_chestplate": {
+        "protocol_id": 315
+      },
+      "minecraft:golden_leggings": {
+        "protocol_id": 316
+      },
+      "minecraft:golden_boots": {
+        "protocol_id": 317
+      },
+      "minecraft:flint": {
+        "protocol_id": 318
+      },
+      "minecraft:porkchop": {
+        "protocol_id": 319
+      },
+      "minecraft:cooked_porkchop": {
+        "protocol_id": 320
+      },
+      "minecraft:painting": {
+        "protocol_id": 321
+      },
+      "minecraft:golden_apple": {
+        "protocol_id": 322
+      },
+      "minecraft:oak_sign": {
+        "protocol_id": 323
+      },
+      "minecraft:oak_door": {
+        "protocol_id": 324
+      },
+      "minecraft:bucket": {
+        "protocol_id": 325
+      },
+      "minecraft:water_bucket": {
+        "protocol_id": 326
+      },
+      "minecraft:lava_bucket": {
+        "protocol_id": 327
+      },
+      "minecraft:minecart": {
+        "protocol_id": 328
+      },
+      "minecraft:saddle": {
+        "protocol_id": 329
+      },
+      "minecraft:iron_door": {
+        "protocol_id": 330
+      },
+      "minecraft:redstone": {
+        "protocol_id": 331
+      },
+      "minecraft:snowball": {
+        "protocol_id": 332
+      },
+      "minecraft:oak_boat": {
+        "protocol_id": 333
+      },
+      "minecraft:leather": {
+        "protocol_id": 334
+      },
+      "minecraft:milk_bucket": {
+        "protocol_id": 335
+      },
+      "minecraft:brick": {
+        "protocol_id": 336
+      },
+      "minecraft:clay_ball": {
+        "protocol_id": 337
+      },
+      "minecraft:sugar_cane": {
+        "protocol_id": 338
+      },
+      "minecraft:paper": {
+        "protocol_id": 339
+      },
+      "minecraft:book": {
+        "protocol_id": 340
+      },
+      "minecraft:slime_ball": {
+        "protocol_id": 341
+      },
+      "minecraft:chest_minecart": {
+        "protocol_id": 342
+      },
+      "minecraft:furnace_minecart": {
+        "protocol_id": 343
+      },
+      "minecraft:egg": {
+        "protocol_id": 344
+      },
+      "minecraft:compass": {
+        "protocol_id": 345
+      },
+      "minecraft:fishing_rod": {
+        "protocol_id": 346
+      },
+      "minecraft:clock": {
+        "protocol_id": 347
+      },
+      "minecraft:glowstone_dust": {
+        "protocol_id": 348
+      },
+      "minecraft:cod": {
+        "protocol_id": 349
+      },
+      "minecraft:cooked_cod": {
+        "protocol_id": 350
+      },
+      "minecraft:red_dye": {
+        "protocol_id": 351
+      },
+      "minecraft:bone": {
+        "protocol_id": 352
+      },
+      "minecraft:sugar": {
+        "protocol_id": 353
+      },
+      "minecraft:cake": {
+        "protocol_id": 354
+      },
+      "minecraft:red_bed": {
+        "protocol_id": 355
+      },
+      "minecraft:repeater": {
+        "protocol_id": 356
+      },
+      "minecraft:cookie": {
+        "protocol_id": 357
+      },
+      "minecraft:map": {
+        "protocol_id": 358
+      },
+      "minecraft:shears": {
+        "protocol_id": 359
+      },
+      "minecraft:music_disc_13": {
+        "protocol_id": 2256
+      },
+      "minecraft:music_disc_cat": {
+        "protocol_id": 2257
+      }
+    }
+  }
+}
