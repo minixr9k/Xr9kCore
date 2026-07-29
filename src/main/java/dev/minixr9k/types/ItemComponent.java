@@ -3,19 +3,19 @@ package dev.minixr9k.types;
 public class ItemComponent {
 
     private final String componentType;
-    private final short componentValue;
+    private final Object componentValue;
 
     public ItemComponent() {
         this.componentType = "";
-        this.componentValue = -1;
+        this.componentValue = null;
     }
 
     public ItemComponent(String componentType) {
         this.componentType = componentType;
-        this.componentValue = -1;
+        this.componentValue = null;
     }
 
-    public ItemComponent(String componentType, short componentValue) {
+    public ItemComponent(String componentType, Object componentValue) {
         this.componentType = componentType;
         this.componentValue = componentValue;
     }
@@ -24,7 +24,25 @@ public class ItemComponent {
         return componentType;
     }
 
-    public short getComponentValue() {
+    public Object getComponentValue() {
         return componentValue;
+    }
+
+    public int getValueAsInt() {
+        if (componentValue instanceof Number) {
+            return ((Number) componentValue).intValue();
+        }
+        return 0;
+    }
+
+    public float getValueAsFloat() {
+        if (componentValue instanceof Number) {
+            return ((Number) componentValue).floatValue();
+        }
+        return 0;
+    }
+
+    public String getValueAsString() {
+        return componentValue != null ? componentValue.toString() : "";
     }
 }

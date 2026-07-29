@@ -17,7 +17,7 @@ public class Chunk {
     }
 
     private void generateDefaultTerrain() {
-        int sectionTarget = 10;
+        int sectionTarget = 7;
         int startWorldY = (sectionTarget * 16) - 64;
 
         for (int localX = 0; localX < 16; localX++) {

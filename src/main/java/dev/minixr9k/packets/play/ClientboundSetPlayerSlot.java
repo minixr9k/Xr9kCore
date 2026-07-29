@@ -7,7 +7,9 @@ import dev.minixr9k.types.ItemStack;
 import dev.minixr9k.utils.MinecraftPacket;
 import io.netty.buffer.ByteBuf;
 
-import static dev.minixr9k.utils.ProtocolUtils.writeVarInt;
+import java.util.UUID;
+
+import static dev.minixr9k.utils.ProtocolUtils.*;
 
 public class ClientboundSetPlayerSlot implements MinecraftPacket {
 
@@ -34,13 +36,7 @@ public class ClientboundSetPlayerSlot implements MinecraftPacket {
                 // ID компонента
                 writeVarInt(out, ComponentsRegistry.getComponent(component.getComponentType(), protocolVersion));
 
-                if (component.getComponentValue() != -1) {
-                    writeVarInt(out, 1);
-                    out.writeFloat(component.getComponentValue());
-                    writeVarInt(out, 0);
-                    writeVarInt(out, 0);
-                    writeVarInt(out, 0);
-                }
+                encodeComponent(out, component);
             }
         }
         else {
@@ -51,6 +47,31 @@ public class ClientboundSetPlayerSlot implements MinecraftPacket {
         out.writeBoolean(false);
     }
 
+    private void encodeComponent(ByteBuf out, ItemComponent component) {
+        if (component.getComponentType().equalsIgnoreCase("minecraft:custom_model_data")) { // custom_model_data
+            writeVarInt(out, 1);
+            out.writeFloat(component.getValueAsFloat());
+            writeVarInt(out, 0);
+            writeVarInt(out, 0);
+            writeVarInt(out, 0);
+        }
+
+        if (component.getComponentType().equalsIgnoreCase("minecraft:profile")) { // profile
+            out.writeBoolean(false); // optional username
+            out.writeBoolean(false); // optional uuid
+
+            writeVarInt(out, 1); // properties
+
+            writeString(out, "textures");
+            writeString(out, component.getValueAsString());
+            out.writeBoolean(false); // signature empty
+        }
+
+        if (component.getComponentType().equalsIgnoreCase("minecraft:custom_name")) {
+            writeTextComponent(out, component.getValueAsString());
+        }
+    }
+
     @Override
     public void read(ByteBuf in, int protocolVersion) {
 
@@ -58,9 +79,7 @@ public class ClientboundSetPlayerSlot implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
-        if (protocolVersion == 773)
-            return 0x6C;
-        else if (protocolVersion > 773)
+        if (protocolVersion > 772)
             return 0x6A;
         return 0x65;
     }

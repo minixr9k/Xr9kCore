@@ -88,7 +88,6 @@ public class RegistryDataSender {
             try {
                 // Корневой Compound (В сетевом NBT имя ПУСТОЕ = short 0)
                 nbtBuf.writeByte(10); // TAG_Compound
-//                nbtBuf.writeShort(0);
 //
 //
 //                // --- Начинка element ---
@@ -136,7 +135,8 @@ public class RegistryDataSender {
 //                // "effects": "minecraft:overworld"
                 nbtBuf.writeByte(8);
                 writeNBTString(nbtBuf, "effects");
-                writeNBTString(nbtBuf, "minecraft:overworld");
+//                writeNBTString(nbtBuf, "minecraft:overworld");
+                writeNBTString(nbtBuf, "minecraft:the_nether");
 //
 //                // "has_raids": true
                 nbtBuf.writeByte(1);
@@ -175,6 +175,38 @@ public class RegistryDataSender {
                 writeNBTString(nbtBuf, "minecraft:uniform");
 
                 nbtBuf.writeByte(0); // Закрываем monster_spawn_light_level
+
+//                // "attributes" - в 1.21.x это Compound (интервал uniform)
+                nbtBuf.writeByte(10);
+                writeNBTString(nbtBuf, "attributes");
+
+                nbtBuf.writeByte(8); // minecraft:visual/fog_color (если не записывать то облаков не будет)
+                writeNBTString(nbtBuf, "minecraft:visual/cloud_color");
+                writeNBTString(nbtBuf, "#ccffffff");
+
+                nbtBuf.writeByte(5);
+                writeNBTString(nbtBuf, "minecraft:visual/cloud_height");
+                nbtBuf.writeFloat(192.33f);
+
+                nbtBuf.writeByte(8); // minecraft:visual/fog_color
+                writeNBTString(nbtBuf, "minecraft:visual/fog_color");
+                writeNBTString(nbtBuf, "#c0d8ff");
+
+                nbtBuf.writeByte(8); // minecraft:visual/sky_color
+                writeNBTString(nbtBuf, "minecraft:visual/sky_color");
+                writeNBTString(nbtBuf, "#78a7ff");
+
+                // необязательные настройки
+                nbtBuf.writeByte(5);
+                writeNBTString(nbtBuf, "minecraft:visual/fog_start_distance");
+                nbtBuf.writeFloat(10f);
+
+                nbtBuf.writeByte(5);
+                writeNBTString(nbtBuf, "minecraft:visual/fog_end_distance");
+                nbtBuf.writeFloat(48f);
+                //
+
+                nbtBuf.writeByte(0); // Закрываем attributes
 //
 //                // "min_y": -64
                 nbtBuf.writeByte(3);

@@ -29,9 +29,7 @@ public class ClientboundSetPassengers implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
-        if (protocolVersion == 773)
-            return 0x6B;
-        else if (protocolVersion > 773)
+        if (protocolVersion > 772)
             return 0x69;
         return 0x64;
     }

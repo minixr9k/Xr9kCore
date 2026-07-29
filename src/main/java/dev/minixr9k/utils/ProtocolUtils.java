@@ -46,15 +46,49 @@ public class ProtocolUtils {
         out.writeBytes(bytes);
     }
 
+    public static String readBetaString(ByteBuf in) {
+        // 1. Читаем количество символов в строке (short - 2 байта)
+        short length = in.readShort();
+
+        if (length < 0 || length > 32767) {
+            throw new IllegalArgumentException("Некорректная длина строки: " + length);
+        }
+
+        // 2. Вычисляем длину в байтах (каждый char занимает 2 байта)
+        int byteLength = length * 2;
+
+        // 3. Читаем байты и декодируем их в UTF-16BE
+        String string = in.toString(in.readerIndex(), byteLength, java.nio.charset.StandardCharsets.UTF_16BE);
+
+        // Сдвигаем указатель чтения в ByteBuf на прочитанное количество байт
+        in.skipBytes(byteLength);
+
+        return string;
+    }
+
+    public static void writeBetaString(ByteBuf buf, String string) {
+        if (string.length() > 32767) {
+            throw new IllegalArgumentException("String too long");
+        }
+        buf.writeShort(string.length());
+        for (char c : string.toCharArray()) {
+            buf.writeChar(c);
+        }
+    }
+
     public static void writeUUID(ByteBuf out, UUID uuid) {
         out.writeLong(uuid.getMostSignificantBits());
         out.writeLong(uuid.getLeastSignificantBits());
     }
 
     public static void writeTextComponent(ByteBuf buf, String message){
-        if (message.contains("\"text\":")) {
-            writeColoredTextComponent(buf, message);
-            return;
+        try {
+            if (JsonParser.parseString(message).isJsonArray()) {
+                writeColoredTextComponent(buf, message);
+                return;
+            }
+        } catch (JsonSyntaxException e) {
+
         }
         buf.writeByte(8); // Тип тега String
         byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
@@ -76,11 +110,13 @@ public class ProtocolUtils {
 
         for (JsonElement el : jsonArray) {
             JsonObject obj = el.getAsJsonObject();
-            String text = obj.get("text").getAsString();
+            if (obj.has("text")) {
+                String text = obj.get("text").getAsString();
 
-            // NBT String (ID 8)
-            buf.writeByte(8);
-            writeNbtField(buf, "text", text);
+                // NBT String (ID 8)
+                buf.writeByte(8);
+                writeNbtField(buf, "text", text);
+            }
 
             if (obj.has("color")) {
                 String color = obj.get("color").getAsString();
@@ -88,6 +124,35 @@ public class ProtocolUtils {
                 // NBT String (ID 8)
                 buf.writeByte(8);
                 writeNbtField(buf, "color", color);
+            }
+
+            if (obj.has("type")) {
+                String type = obj.get("type").getAsString();
+
+                // NBT String (ID 8)
+                buf.writeByte(8);
+                writeNbtField(buf, "type", type);
+            }
+
+            if (obj.has("object")) {
+                String object = obj.get("object").getAsString();
+
+                // NBT String (ID 8)
+                buf.writeByte(8);
+                writeNbtField(buf, "object", object);
+            }
+
+            if (obj.has("player")) {
+                // список
+                buf.writeByte(10);
+                writeStringValue(buf, "player");
+
+                String player = obj.get("player").getAsString();
+
+                // NBT String (ID 8)
+                buf.writeByte(8);
+                writeNbtField(buf, "name", player);
+                buf.writeByte(0); // конец списка
             }
 
             // TAG_End (ID 0)

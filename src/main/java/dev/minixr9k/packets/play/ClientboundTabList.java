@@ -29,7 +29,7 @@ public class ClientboundTabList implements MinecraftPacket {
     @Override
     public int getPacketId(int protocolVersion) {
         if (protocolVersion == 773)
-            return 0x7A;
+            return 0x78;
         else if (protocolVersion > 773)
             return 0x78;
         return 0x73;

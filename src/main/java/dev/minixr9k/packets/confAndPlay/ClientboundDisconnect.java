@@ -25,6 +25,8 @@ public class ClientboundDisconnect implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
+        if (protocolVersion > 772)
+            return 0x20;
         return 0x1C;
     }
 }

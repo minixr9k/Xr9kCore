@@ -26,9 +26,7 @@ public class ClientboundRemoveEntity implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
-        if (protocolVersion == 773)
-            return 0x4D;
-        else if (protocolVersion > 773)
+        if (protocolVersion > 772)
             return 0x4B;
         return 0x46;
     }

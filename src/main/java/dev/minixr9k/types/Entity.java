@@ -17,6 +17,8 @@ public class Entity {
 
     private boolean onGround = false;
 
+    private Inventory inventory;
+
     private boolean lookingAtPlayer;
 
     public void updatePrevPosition() {
@@ -165,6 +167,14 @@ public class Entity {
 
     public void setSneaking(boolean sneaking) {
         isSneaking = sneaking;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public void setInventory(Inventory inventory) {
+        this.inventory = inventory;
     }
 
 }

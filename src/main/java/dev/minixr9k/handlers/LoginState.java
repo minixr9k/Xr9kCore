@@ -1,5 +1,7 @@
 package dev.minixr9k.handlers;
 
+import dev.minixr9k.auth.PlayerProfile;
+import dev.minixr9k.features.SkinCache;
 import dev.minixr9k.features.World;
 import dev.minixr9k.packets.login.ClientboundLoginDisconnect;
 import dev.minixr9k.packets.login.ClientboundLoginSuccessPacket;
@@ -12,15 +14,19 @@ import dev.minixr9k.utils.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+
+import java.util.List;
 import java.util.UUID;
 
 public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
 
     private final int protocolVersion;
+    private final List<PlayerProfile> properties;
     private Player player;
 
-    public LoginState(int protocolVersion) {
+    public LoginState(int protocolVersion, List<PlayerProfile> properties) {
         this.protocolVersion = protocolVersion;
+        this.properties = properties;
     }
 
     @Override
@@ -61,11 +67,15 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
                 ctx.close();
             }
 
-            player = new Player();
-            player.setProtocolVersion(protocolVersion);
-            player.setCtx(ctx);
+            player = new Player(ctx, protocolVersion);
             player.setUsername(username);
             player.setUuid(uuid);
+
+            if (!properties.isEmpty()) {
+                if (SkinCache.get(uuid) != null)
+                    SkinCache.remove(uuid);
+                SkinCache.put(uuid, properties);
+            }
 
             System.out.println("[Xr9kCore] UUID of player " + username + " is " + uuid);
 

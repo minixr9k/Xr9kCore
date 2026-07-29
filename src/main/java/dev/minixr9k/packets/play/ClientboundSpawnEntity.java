@@ -65,7 +65,7 @@ public class ClientboundSpawnEntity implements MinecraftPacket {
         out.writeByte((byte) (headYaw * 256.0F / 360.0F));
 
         if (protocolVersion <= 772) {
-            out.writeByte(0);
+            out.writeByte(data);
             out.writeShort(velocityX);
             out.writeShort(velocityY);
             out.writeShort(velocityZ);

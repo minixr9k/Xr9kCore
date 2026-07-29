@@ -29,6 +29,8 @@ public class ClientboundUpdateTime implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
+        if (protocolVersion == 773)
+            return 0x6F;
         return 0x6A;
     }
 }

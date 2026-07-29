@@ -14,8 +14,10 @@ public enum Metadata {
     POSITION(10),
     OPTIONAL_POSITION(11),
     DIRECTION(12),
+    BLOCK_STATE(14),
     POSE(21),
-    HUMANOID_ARM(40);
+    VECTOR3F(33),
+    QUATERNION(34);
 
     private final int id;
     Metadata(int id) { this.id = id; }

@@ -30,7 +30,7 @@ public class ClientboundPlayerAbilities implements MinecraftPacket {
     @Override
     public int getPacketId(int protocolVersion) {
         if (protocolVersion == 773)
-            return 0x40;
+            return 0x3E;
         else if (protocolVersion > 773)
             return 0x3E;
         return 0x39;

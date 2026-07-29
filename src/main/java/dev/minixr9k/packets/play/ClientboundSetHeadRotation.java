@@ -28,9 +28,7 @@ public class ClientboundSetHeadRotation implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
-        if (protocolVersion == 773)
-            return 0x53;
-        else if (protocolVersion > 773)
+        if (protocolVersion > 772)
             return 0x51;
         return 0x4C;
     }

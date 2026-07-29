@@ -1,6 +1,9 @@
 package dev.minixr9k.types;
 
 import dev.minixr9k.auth.PlayerProfile;
+import dev.minixr9k.packets.beta.play.ChatMessage3Packet;
+import dev.minixr9k.packets.beta.play.PlayerPositionAndLook13Packet;
+import dev.minixr9k.packets.beta.play.TimeUpdate4Packet;
 import dev.minixr9k.packets.confAndPlay.ClientboundDisconnect;
 import dev.minixr9k.packets.play.*;
 import io.netty.channel.ChannelHandlerContext;
@@ -10,18 +13,18 @@ import java.util.List;
 public class Player extends Entity {
 
     private String username;
-    private GameMode gameMode = GameMode.SURVIVAL;
+    private GameMode gameMode;
     private boolean isAllowFlight;
     private boolean isFlying;
     private boolean isLoaded;
     private int teleportImmunityTicks = 0;
     private int opLevel;
+    private boolean isSprinting;
+    private boolean isGliding;
 
     private int health = 20;
     private int food = 20;
     private int saturation = 20;
-
-    private Inventory inventory;
 
     private int passengerOfEntity = 0;
 
@@ -31,8 +34,17 @@ public class Player extends Entity {
     private ChannelHandlerContext ctx;
     private int protocolVersion;
 
+    public Player(ChannelHandlerContext ctx, int protocolVersion) {
+        this.ctx = ctx;
+        this.protocolVersion = protocolVersion;
+        setInventory(new Inventory(ctx, protocolVersion));
+    }
+
     public void sendMessage(String message) {
-        new ClientboundSystemMessage(message, false).send(ctx, protocolVersion);
+        if (protocolVersion <= 99)
+            new ChatMessage3Packet(message).send(ctx, protocolVersion);
+        else
+            new ClientboundSystemMessage(message, false).send(ctx, protocolVersion);
     }
 
     public void teleport(double x, double y, double z) {
@@ -40,7 +52,23 @@ public class Player extends Entity {
         this.setX(x);
         this.setY(y);
         this.setZ(z);
+        if (protocolVersion < 99) {
+            new PlayerPositionAndLook13Packet(x, y, y + 1.62, z, 0, 0, false).send(ctx, protocolVersion);
+            return;
+        }
         new ClientboundSyncPlayerPos(0, x, y, z, 0, 0).send(ctx, protocolVersion);
+    }
+
+    public void teleport(Location location) {
+        this.teleportImmunityTicks = 3;
+        this.setX(location.getX());
+        this.setY(location.getY());
+        this.setZ(location.getZ());
+        if (protocolVersion < 99) {
+            new PlayerPositionAndLook13Packet(location.getX(), location.getY(), location.getY() + 1.62, location.getZ(), 0, 0, false).send(ctx, protocolVersion);
+            return;
+        }
+        new ClientboundSyncPlayerPos(0, location.getX(), location.getY(), location.getZ(), 0, 0).send(ctx, protocolVersion);
     }
 
     public void teleport(double x, double y, double z, float yaw, float pitch) {
@@ -50,6 +78,10 @@ public class Player extends Entity {
         this.setZ(z);
         this.setYaw(yaw);
         this.setPitch(pitch);
+        if (protocolVersion < 99) {
+            new PlayerPositionAndLook13Packet(x, y, y + 1.62, z, yaw, pitch, false).send(ctx, protocolVersion);
+            return;
+        }
         new ClientboundSyncPlayerPos(0, x, y, z, yaw, pitch).send(ctx, protocolVersion);
     }
 
@@ -58,6 +90,10 @@ public class Player extends Entity {
         this.setX(x);
         this.setY(y);
         this.setZ(z);
+        if (protocolVersion < 99) {
+            new PlayerPositionAndLook13Packet(x, y, y + 1.62, z, 0, 0, false).send(ctx, protocolVersion);
+            return;
+        }
         new ClientboundSyncPlayerPos(0, x, y, z, 0, 0).send(ctx, protocolVersion);
     }
 
@@ -66,6 +102,10 @@ public class Player extends Entity {
         this.setX(x);
         this.setY(y);
         this.setZ(z);
+        if (protocolVersion < 99) {
+            new PlayerPositionAndLook13Packet(x, y, y + 1.62, z, yaw, pitch, false).send(ctx, protocolVersion);
+            return;
+        }
         new ClientboundSyncPlayerPos(0, x, y, z, yaw, pitch).send(ctx, protocolVersion);
     }
 
@@ -97,13 +137,29 @@ public class Player extends Entity {
         new ClientboundSetHealth(health, food, saturation).send(ctx, protocolVersion);
     }
 
+    public void setFoodLevel(int food) {
+        setFood(food);
+    }
+
     public void setSaturation(int saturation) {
         this.saturation = saturation;
         new ClientboundSetHealth(health, food, saturation).send(ctx, protocolVersion);
     }
 
     public void setLocalWorldTime(int time, boolean isTimeIncreasing) {
+        if (protocolVersion < 99) {
+            new TimeUpdate4Packet(time).send(ctx, protocolVersion);
+            return;
+        }
         new ClientboundUpdateTime(time, time, isTimeIncreasing).send(ctx, protocolVersion);
+    }
+
+    public void sendTabList(String header, String footer) {
+        new ClientboundTabList(header, footer).send(ctx, protocolVersion);
+    }
+
+    public void sendGameEvent(int eventId, int value) {
+        new ClientboundGameEvent(eventId, value).send(ctx, protocolVersion);
     }
 
     public void sendPluginMessage(String channel, String command, String value) {
@@ -113,6 +169,7 @@ public class Player extends Entity {
 
     public void kick(String reason) {
         new ClientboundDisconnect(reason).send(ctx, protocolVersion);
+        ctx.close();
     }
 
     public void setOpLevel(int opLevel) {
@@ -145,6 +202,8 @@ public class Player extends Entity {
     public void setUsername(String username) {
         this.username = username;
     }
+
+    public void setSystemGameMode(GameMode gameMode) { this.gameMode = gameMode; }
 
     public GameMode getGameMode() {
         return gameMode;
@@ -258,20 +317,28 @@ public class Player extends Entity {
         }
     }
 
-    public Inventory getInventory() {
-        return inventory;
-    }
-
-    public void setInventory(Inventory inventory) {
-        this.inventory = inventory;
-    }
-
     public String getBrand() {
         return brand;
     }
 
     public void setBrand(String brand) {
         this.brand = brand;
+    }
+
+    public boolean isSprinting() {
+        return isSprinting;
+    }
+
+    public void setSprinting(boolean sprinting) {
+        isSprinting = sprinting;
+    }
+
+    public boolean isGliding() {
+        return isGliding;
+    }
+
+    public void setGliding(boolean gliding) {
+        isGliding = gliding;
     }
 
 }

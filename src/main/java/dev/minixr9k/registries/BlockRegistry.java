@@ -4,21 +4,18 @@ import com.google.gson.stream.JsonReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class BlockRegistry {
 
-    private static int[] hashes;
-    private static int[] ids;
+    private static final Map<String, Integer> stateToId = new HashMap<>();
+    private static final Map<String, Integer> defaultNameToId = new HashMap<>();
+    private static final Map<Integer, String> idToState = new HashMap<>();
     private static boolean isInitialized = false;
 
     public static void initialize() {
         if (isInitialized) return;
 
-        // Используем TreeMap для временной сортировки по хешу
-        TreeMap<Integer, Integer> tempMap = new TreeMap<>();
         String fileName = "/blocks/blocks1.21.8.json";
 
         try (InputStream is = BlockRegistry.class.getResourceAsStream(fileName)) {
@@ -38,16 +35,37 @@ public class BlockRegistry {
                             while (reader.hasNext()) {
                                 int id = -1;
                                 boolean isDefault = false;
+                                Map<String, String> props = new TreeMap<>(); // TreeMap для сохранения сортировки ключей!
+
                                 reader.beginObject();
                                 while (reader.hasNext()) {
                                     String attr = reader.nextName();
-                                    if (attr.equals("id")) id = reader.nextInt();
-                                    else if (attr.equals("default")) isDefault = reader.nextBoolean();
-                                    else reader.skipValue();
+                                    if (attr.equals("id")) {
+                                        id = reader.nextInt();
+                                    } else if (attr.equals("default")) {
+                                        isDefault = reader.nextBoolean();
+                                    } else if (attr.equals("properties")) {
+                                        reader.beginObject();
+                                        while (reader.hasNext()) {
+                                            props.put(reader.nextName(), reader.nextString());
+                                        }
+                                        reader.endObject();
+                                    } else {
+                                        reader.skipValue();
+                                    }
                                 }
                                 reader.endObject();
-                                if (isDefault) defaultId = id;
-                                else if (defaultId == -1) defaultId = id;
+
+                                if (id != -1) {
+                                    // Сохраняем полный блокстейт
+                                    String fullState = buildStateString(blockName, props);
+                                    stateToId.put(fullState, id);
+                                    idToState.put(id, fullState);
+
+                                    if (isDefault || defaultId == -1) {
+                                        defaultId = id;
+                                    }
+                                }
                             }
                             reader.endArray();
                         } else {
@@ -56,52 +74,71 @@ public class BlockRegistry {
                     }
                     reader.endObject();
 
-                    // Заполняем временную мапу
                     if (defaultId != -1) {
-                        tempMap.put(blockName.hashCode(), defaultId);
+                        defaultNameToId.put(blockName, defaultId);
                     }
                 }
                 reader.endObject();
             }
 
-            // Переносим в примитивные массивы
-            hashes = new int[tempMap.size()];
-            ids = new int[tempMap.size()];
-            int i = 0;
-            for (Map.Entry<Integer, Integer> entry : tempMap.entrySet()) {
-                hashes[i] = entry.getKey();
-                ids[i] = entry.getValue();
-                i++;
-            }
-
             isInitialized = true;
-            System.out.println("[BlockRegistry] Успешно загружено " + hashes.length + " блоков (Memory Optimized).");
+            System.out.println("[BlockRegistry] Успешно загружено " + stateToId.size() + " состояний блоков.");
         } catch (Exception e) {
             throw new RuntimeException("Ошибка инициализации BlockRegistry", e);
         }
     }
 
-//    public static int getBlock(String block, int protocolVersion) {
-//        if (!isInitialized) initialize();
-//
-//        if (!block.contains(":")) block = "minecraft:" + block;
-//
-//        // Бинарный поиск работает за O(log n)
-//        int index = Arrays.binarySearch(hashes, block.hashCode());
-//        return (index >= 0) ? ids[index] : -1;
-//    }
-
     public static int getBlock(String block, int protocolVersion) {
         if (!isInitialized) initialize();
         if (!block.contains(":")) block = "minecraft:" + block;
 
-        // Убираем состояние [axis=..., type=... и т.д.]
-        String cleanBlock = block;
+        // 1. Точное совпадение со свойствами (например, minecraft:spruce_stairs[facing=south,...])
         if (block.contains("[")) {
-            cleanBlock = block.substring(0, block.indexOf('['));
+            String normalized = normalizeBlockState(block);
+            if (stateToId.containsKey(normalized)) {
+                return stateToId.get(normalized);
+            }
+            // Если с кастомными свойствами не нашли, берем базовое имя
+            block = block.substring(0, block.indexOf('['));
         }
 
-        int index = Arrays.binarySearch(hashes, cleanBlock.hashCode());
-        return (index >= 0) ? ids[index] : -1;
+        // 2. Фолбэк на дефолтное состояние блока
+        return defaultNameToId.getOrDefault(block, -1);
+    }
+
+    public static String getBlockName(int blockId, int protocolVersion) {
+        if (!isInitialized) initialize();
+        return idToState.get(blockId);
+    }
+
+    // Нормализация порядка свойств (facing=south,half=top... -> в алфавитном порядке)
+    private static String normalizeBlockState(String input) {
+        int bracketIndex = input.indexOf('[');
+        if (bracketIndex == -1) return input;
+
+        String baseName = input.substring(0, bracketIndex);
+        String propsRaw = input.substring(bracketIndex + 1, input.length() - 1);
+
+        Map<String, String> props = new TreeMap<>();
+        for (String pair : propsRaw.split(",")) {
+            String[] kv = pair.split("=");
+            if (kv.length == 2) {
+                props.put(kv[0].trim(), kv[1].trim());
+            }
+        }
+        return buildStateString(baseName, props);
+    }
+
+    private static String buildStateString(String baseName, Map<String, String> props) {
+        if (props.isEmpty()) return baseName;
+        StringBuilder sb = new StringBuilder(baseName).append('[');
+        boolean first = true;
+        for (Map.Entry<String, String> entry : props.entrySet()) {
+            if (!first) sb.append(',');
+            sb.append(entry.getKey()).append('=').append(entry.getValue());
+            first = false;
+        }
+        sb.append(']');
+        return sb.toString();
     }
 }

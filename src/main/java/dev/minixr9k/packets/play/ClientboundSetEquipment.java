@@ -42,6 +42,8 @@ public class ClientboundSetEquipment implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
+        if (protocolVersion > 772)
+            return 0x64;
         return 0x5F;
     }
 }

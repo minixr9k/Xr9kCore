@@ -11,6 +11,9 @@ public class ComponentsRegistry {
     public static int getComponent(String component, int protocolVersion) {
         String fileName = "components1.21.8.json";
 
+        if (protocolVersion == 774)
+            fileName = "components1.21.11.json";
+
         try (InputStream is = ItemRegistry.class.getResourceAsStream("/data_component_type/" + fileName)) {
             if (is == null) return -1;
 

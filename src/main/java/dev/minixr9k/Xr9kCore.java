@@ -1,20 +1,23 @@
 package dev.minixr9k;
 
+import dev.minixr9k.config.Configuration;
 import dev.minixr9k.config.PluginLoader;
+import dev.minixr9k.features.MiniMessage;
 import dev.minixr9k.features.World;
 
 public class Xr9kCore {
 
     public static void main(String[] args) {
+        Configuration.loadConfig();
         PluginLoader.loadPlugins();
-        World.initWorld(8, 2);
+        World.initWorld(Configuration.get().world.chunks, Configuration.get().world.grassChunks);
 
         // 2. Регистрируем автосохранение при выключении процесса
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("[LinearChunkHolder] Выключение сервера... Сохраняем мир...");
             World.saveWorld();
         }));
-        new NetworkServer(25565).start();
+        new NetworkServer(Configuration.get().port).start();
     }
 
 }

@@ -5,10 +5,13 @@ import com.google.gson.JsonSyntaxException;
 import dev.minixr9k.api.EventBus;
 import dev.minixr9k.api.event.*;
 import dev.minixr9k.auth.PlayerProfile;
+import dev.minixr9k.config.Configuration;
 import dev.minixr9k.config.PluginLoader;
 import dev.minixr9k.features.SkinCache;
 import dev.minixr9k.features.World;
+import dev.minixr9k.packets.confAndPlay.ClientboundResourcepackPush;
 import dev.minixr9k.packets.play.*;
+import dev.minixr9k.registries.BlockRegistry;
 import dev.minixr9k.types.*;
 import dev.minixr9k.utils.Requests;
 import io.netty.buffer.ByteBuf;
@@ -18,6 +21,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -33,7 +37,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
     private long lastKeepAliveId;
     private boolean keepAlivePending = false;
 
-    private final boolean anticheat = false;
+    private final boolean anticheat = Configuration.get().anticheat;
     private double timerBalance = 10.0;
     private long lastPacketTime = System.currentTimeMillis();
 
@@ -50,11 +54,18 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
-        new ClientboundJoinGame(GameMode.SURVIVAL).send(ctx, protocolVersion);
+        new ClientboundJoinGame(Configuration.get().gameMode, player).send(ctx, protocolVersion);
 
-        int chunkRadius = 8;
+        int chunkRadius = Configuration.get().world.chunks;
 
         sendChunks(ctx, protocolVersion, chunkRadius);
+
+        String resourcePack = Configuration.get().resourcepack.url;
+        String resourcePackSha1 = Configuration.get().resourcepack.sha1;
+        if (!resourcePack.isEmpty() && !resourcePackSha1.isEmpty()) {
+            UUID uuid = UUID.nameUUIDFromBytes(resourcePack.getBytes(StandardCharsets.UTF_8));
+            new ClientboundResourcepackPush(uuid, resourcePack, resourcePackSha1, Configuration.get().resourcepack.forced, Configuration.get().resourcepack.prompt).send(ctx, protocolVersion);
+        }
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -63,7 +74,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                         return;
                     }
 
-                    if (!SkinCache.has(player.getUuid())) {
+                    if (Configuration.get().buildInSkins && !SkinCache.has(player.getUuid())) {
                         List<PlayerProfile> skinData = Requests.getSkin(player.getUsername());
                         SkinCache.put(player.getUuid(), skinData);
                     }
@@ -73,39 +84,129 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                     World.spawnEntities(player);
                     EventBus.getInstance().callEvent(new PlayerJoinEvent(player));
                     World.broadcast("§e{player} joined the game (id={entityId})".replace("{player}", player.getUsername()).replace("{entityId}", String.valueOf(player.getEntityId())));
-//                    UUID player2 = UUID.randomUUID();
-
-//                    int actions = 0x01 | 0x04 | 0x08 | 0x10;
-
-//                    new ClientboundPlayerInfoUpdate(actions, player2, "Notch", Requests.getSkin("Notch")).send(ctx, protocolVersion);
-//                    new ClientboundPlayerInfoUpdate(actions, player2, "Notch", null).send(ctx, protocolVersion);
-//                    new ClientboundSpawnEntity(100, UUID.randomUUID(), "minecraft:bee", 0.5, 116, 12.5, 180, 0, 180, 0, 0, 0, 0).send(ctx, protocolVersion);
-//                    new ClientboundSpawnEntity(101, player2, "minecraft:player", 7, 116, 12.5, 0, 0, 0, 0, 0, 0, 0).send(ctx, protocolVersion);
-//
-//                    ClientboundSetEntityMetadata packet = new ClientboundSetEntityMetadata(100);
-//                    packet.add(new MetadataEntry<>(2, Metadata.OPTIONAL_TEXT_COMPONENT, "§6§lꜱᴇʀᴠᴇʀ"));
-//                    packet.add(new MetadataEntry<>(3, Metadata.BOOLEAN, true));
-//                    packet.send(ctx, protocolVersion);
 
                     startKeepAliveLoop(ctx);
 
-                    if (protocolVersion <= 772)
-                        player.setLocalWorldTime(8000, false);
-                    player.teleport(0, 112, 0);
-                    player.setOpLevel(2);
-                    player.setInventory(new Inventory(ctx, protocolVersion));
+                    if (protocolVersion <= 773)
+                        player.setLocalWorldTime(Configuration.get().time, Configuration.get().isTimeIncreasing);
+                    player.teleport(Configuration.get().spawnPosition);
 
-                    new ClientboundGameEvent(13, 0).send(ctx, protocolVersion);
-                    new ClientboundTabList(" ", "\n\n   §7RAM Usage: {usage}MB   ".replace("{usage}", String.valueOf(getRssMemory()))).send(ctx, protocolVersion);
-                    player.getInventory().setItemInMainHand(new ItemStack("minecraft:wooden_sword", (short) 1));
+                    int opLevel = Configuration.get().operators.getOrDefault(player.getUsername(), 0);
+                    if (opLevel > 0) player.setOpLevel(opLevel);
+
+                    player.sendGameEvent(13, 0);
+                    player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
+//                    player.getInventory().setItemHotbar(4, new ItemStack("minecraft:compass", (short) 1, List.of(new ItemComponent("minecraft:custom_name", "[{\"text\": \"Minigames\", \"color\":\"#FF7F50\"}]"))));
                     World.setEquipment(player);
                     player.updateInventory(0);
+//                    spawnDisplayModel(new Vector3f(1, 112, 1));
                 });
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
+    }
+
+    public void spawnDisplayModel(Vector3f pos) {
+        // 1. Спавним основание (block_display)
+        int blockDisplayId = 99;
+
+        new ClientboundSpawnEntity(
+                blockDisplayId,
+                UUID.randomUUID(),
+                "minecraft:block_display",
+                pos.getX() - 0.5, pos.getY() + 0.5, pos.getZ() - 0.5,
+                0, 0, 0, 0, 0, 0, 0
+        ).send(player.getCtx(), protocolVersion);
+
+        ClientboundSetEntityMetadata blockMetadata = new ClientboundSetEntityMetadata(blockDisplayId);
+        int stoneBlockStateId = 0; // ID состояния блока
+        blockMetadata.add(new MetadataEntry<>(23, Metadata.BLOCK_STATE, stoneBlockStateId));
+        blockMetadata.send(player.getCtx(), protocolVersion);
+
+        // Массив для хранения всех ID голов, чтобы потом сделать их пассажирами
+        List<Integer> headIds = new ArrayList<>();
+
+        // Данные для 4 голов из команды /summon
+        HeadData[] headsData = new HeadData[] {
+                // Голова 1 (Aspen055)
+                new HeadData(
+                        "ewogICJ0aW1lc3RhbXAiIDogMTc4NDQ3MDg4NDI1NSwKICAicHJvZmlsZUlkIiA6ICI2NDg4Y2VjMjc4OGQ0MTI2OTk5NWMyMmY4OTdmMzA4OSIsCiAgInByb2ZpbGVOYW1lIiA6ICJBc3BlbjA1NSIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS8zOTQxYTJlNTc4YjRhNmRhNTIyYWQyZmM2YzE5MWU3ZDljYThhMDBjYjc4NzI1YjdhNzBmMmU2NGEwMTU3M2ZkIgogICAgfQogIH0KfQ==",
+                        new Vector3f(0.0f, 0.5f, 0.0f),
+                        new Vector3f(1.0f, 1.0f, 0.1f)
+                ),
+                // Голова 2 (raxitocl)
+                new HeadData(
+                        "ewogICJ0aW1lc3RhbXAiIDogMTc4NDQ3MDg4NzM4MiwKICAicHJvZmlsZUlkIiA6ICJkMTQ4NjFiM2UwZmM0Njk5OTFlMTcyNTllMzdiZjZhZCIsCiAgInByb2ZpbGVOYW1lIiA6ICJyYXhpdG9jbCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS83YTk3OTBhOTc5MDU2MzkwNjhiOTM3MDQ0ZWZhYjJiNWI4MDRhYWFiZTFmOWM4NmMyNmRlZjJhZmQ5MTY2ODJhIgogICAgfQogIH0KfQ==",
+                        new Vector3f(0.0f, 1.0f, 0.0f),
+                        new Vector3f(1.0f, 1.0f, 0.1f)
+                ),
+                // Голова 3 (elnadXB)
+                new HeadData(
+                        "ewogICJ0aW1lc3RhbXAiIDogMTc4NDQ3MDg5MDIzOSwKICAicHJvZmlsZUlkIiA6ICI5MTU1ZmYzNTNlMzc0ZmZlYjE0MmE5NmU2MzU2ZjA4NSIsCiAgInByb2ZpbGVOYW1lIiA6ICJlbG5hZFhCIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzM5Y2VkMGM5OWRlZTU5ODVkMzA5ZGQ2MzI5NmJkNzlmZjdmMjQzNGFiNmExYjU2YTZmYTE5NzIyNzhkYjM5ZjkiCiAgICB9CiAgfQp9",
+                        new Vector3f(-0.3125f, 0.5f, 0.0f),
+                        new Vector3f(0.25f, 1.0f, 0.1f)
+                ),
+                // Голова 4 (1etho)
+                new HeadData(
+                        "ewogICJ0aW1lc3RhbXAiIDogMTc4NDQ3MDg5MjY2NSwKICAicHJvZmlsZUlkIiA6ICI4MjYxOGI1ZjhhMzA0Njg2YTkyMTM2ZDcxZTlhZDkyMSIsCiAgInByb2ZpbGVOYW1lIiA6ICIxZXRobyIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS85MzBmN2RkZDVjZDY3ZDEzMzk0ZjYyMzRiYzkxYWNlYmE1MmFkZTJhMDdlODZiMmM1ZWUwOWJlNTg3ZmJhNSIKICAgIH0KICB9Cn0=",
+                        new Vector3f(-0.3125f, 1.0f, 0.0f),
+                        new Vector3f(0.25f, 1.0f, 0.1f)
+                )
+        };
+
+        // 2. Спавним и настраиваем каждую из 4 голов
+        for (HeadData data : headsData) {
+            int headDisplayId = globalEntityId.getAndIncrement();
+            headIds.add(headDisplayId);
+
+            new ClientboundSpawnEntity(
+                    headDisplayId,
+                    UUID.randomUUID(),
+                    "minecraft:item_display",
+                    pos.getX() - 0.5, pos.getY() + 0.5, pos.getZ() - 0.5,
+                    0, 0, 0, 0, 0, 0, 0
+            ).send(player.getCtx(), protocolVersion);
+
+            ItemStack headItem = new ItemStack(
+                    "minecraft:player_head",
+                    (short) 1,
+                    List.of(new ItemComponent("minecraft:profile", data.textureBase64))
+            );
+
+            ClientboundSetEntityMetadata headMetadata = new ClientboundSetEntityMetadata(headDisplayId);
+
+            // Поле 11: Translation (позиция относительно блока)
+            headMetadata.add(new MetadataEntry<>(11, Metadata.VECTOR3F, data.translation));
+
+            // Поле 12: Scale (размер головы по осям)
+            headMetadata.add(new MetadataEntry<>(12, Metadata.VECTOR3F, data.scale));
+
+            // Поле 23: Предмет
+            headMetadata.add(new MetadataEntry<>(23, Metadata.SLOT, headItem));
+
+            // Поле 24: Item Display Context = NONE (byte 0)
+            headMetadata.add(new MetadataEntry<>(24, Metadata.BYTE, (byte) 0));
+
+            headMetadata.send(player.getCtx(), protocolVersion);
+        }
+
+        new ClientboundSetPassengersList(blockDisplayId, headIds)
+                .send(player.getCtx(), protocolVersion);
+    }
+
+    // Вспомогательный класс-структура для данных головы
+    private static class HeadData {
+        final String textureBase64;
+        final Vector3f translation;
+        final Vector3f scale;
+
+        public HeadData(String textureBase64, Vector3f translation, Vector3f scale) {
+            this.textureBase64 = textureBase64;
+            this.translation = translation;
+            this.scale = scale;
+        }
     }
 
     @Override
@@ -131,6 +232,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 case 0x1F -> handleRotation(ctx, in);
                 case 0x21 -> handleMoveVehicle(ctx, in);
                 case 0x28 -> handlePlayerAction(ctx, in);
+                case 0x29 -> handlePlayerCommand(ctx, in);
                 case 0x2A -> handlePlayerInput(ctx, in);
                 case 0x34 -> handleSetHotbarSlot(ctx, in);
                 case 0x3C -> handleSwingArm(ctx, in);
@@ -164,7 +266,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         this.keepAliveTickFuture = ctx.executor().scheduleAtFixedRate(() -> {
             this.lastKeepAliveId = System.currentTimeMillis();
             new ClientboundKeepAlive().send(ctx, protocolVersion);
-            new ClientboundTabList(" ", "\n\n   §7RAM Usage: {usage}MB   ".replace("{usage}", String.valueOf(getRssMemory()))).send(ctx, protocolVersion);
+            player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
             this.keepAlivePending = true;
             this.lastKeepAliveSentTime = System.currentTimeMillis();
         }, 5, 15, TimeUnit.SECONDS);
@@ -218,11 +320,14 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         EventBus.getInstance().callEvent(new PlayerInteractEntityEvent(player, entityId, type, isSneaking));
 
         if (type == 1) {
-            new ClientboundDamageEvent(entityId, 34).send(ctx, protocolVersion);
             Player p = World.getPlayer(entityId);
             if (p != null && (p.getGameMode() == GameMode.ADVENTURE || p.getGameMode() == GameMode.SURVIVAL)) {
                 p.setHealth(p.getHealth() - 1);
+                new ClientboundDamageEvent(entityId, 34).send(ctx, protocolVersion);
+                return;
             }
+
+            new ClientboundDamageEvent(entityId, 34).send(ctx, protocolVersion);
         }
 
 //        System.out.println("Interact with entity=" + entityId + " type=" + type);
@@ -256,32 +361,32 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
         EventBus.getInstance().callEvent(new PlayerMoveEvent(player, x, y, z, player.getYaw(), player.getPitch()));
 
-        if (player.getTeleportImmunityTicks() > 0) {
-            player.decreaseImmunity();
-            player.setX(x);
-            player.setY(y);
-            player.setZ(z);
-            player.setOnGround(flags == 0x01);
-            World.movePlayer(player);
-            return;
-        }
-
-        double deltaY = y - player.getY();
-        // speed
-        double dx = x - player.getX();
-        double dz = z - player.getZ();
-        double distanceSq = dx * dx + dz * dz;
-        if (distanceSq > 15) {
-            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-            return;
-        }
-        // speed -end-
-
-        if (deltaY > 0.42 && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE
-        && player.getGameMode() != GameMode.SPECTATOR && player.isLoaded() && !player.isOnGround()) {
-            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-            return;
-        }
+//        if (player.getTeleportImmunityTicks() > 0) {
+//            player.decreaseImmunity();
+//            player.setX(x);
+//            player.setY(y);
+//            player.setZ(z);
+//            player.setOnGround(flags == 0x01);
+//            World.movePlayer(player);
+//            return;
+//        }
+//
+//        double deltaY = y - player.getY();
+//        // speed
+//        double dx = x - player.getX();
+//        double dz = z - player.getZ();
+//        double distanceSq = dx * dx + dz * dz;
+//        if (distanceSq > 15) {
+//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+//            return;
+//        }
+//        // speed -end-
+//
+//        if (deltaY > 0.42 && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE
+//        && player.getGameMode() != GameMode.SPECTATOR && player.isLoaded() && !player.isOnGround()) {
+//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+//            return;
+//        }
 
         player.setX(x);
         player.setY(y);
@@ -321,34 +426,34 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
         EventBus.getInstance().callEvent(new PlayerMoveEvent(player, x, y, z, yaw, pitch));
 
-        if (player.getTeleportImmunityTicks() > 0) {
-            player.decreaseImmunity();
-            player.setX(x);
-            player.setY(y);
-            player.setZ(z);
-            player.setYaw(yaw);
-            player.setPitch(pitch);
-            player.setOnGround(flags == 0x01);
-            World.movePlayer(player);
-            return;
-        }
-
-        double deltaY = y - player.getY();
-        // speed
-        double dx = x - player.getX();
-        double dz = z - player.getZ();
-        double distanceSq = dx * dx + dz * dz;
-        if (distanceSq > 15) {
-            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-            return;
-        }
-        // speed -end-
-
-        if (deltaY > 0.42 && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE
-                && player.getGameMode() != GameMode.SPECTATOR && player.isLoaded() && !player.isOnGround()) {
-            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-            return;
-        }
+//        if (player.getTeleportImmunityTicks() > 0) {
+//            player.decreaseImmunity();
+//            player.setX(x);
+//            player.setY(y);
+//            player.setZ(z);
+//            player.setYaw(yaw);
+//            player.setPitch(pitch);
+//            player.setOnGround(flags == 0x01);
+//            World.movePlayer(player);
+//            return;
+//        }
+//
+//        double deltaY = y - player.getY();
+//        // speed
+//        double dx = x - player.getX();
+//        double dz = z - player.getZ();
+//        double distanceSq = dx * dx + dz * dz;
+//        if (distanceSq > 15) {
+//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+//            return;
+//        }
+//        // speed -end-
+//
+//        if (deltaY > 0.42 && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE
+//                && player.getGameMode() != GameMode.SPECTATOR && player.isLoaded() && !player.isOnGround()) {
+//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+//            return;
+//        }
 
         player.setX(x);
         player.setY(y);
@@ -396,6 +501,9 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             entity.setZ(z);
             entity.setYaw(yaw);
             entity.setPitch(pitch);
+            player.setX(x);
+            player.setY(y);
+            player.setZ(z);
 
             if (deltaY > 0) {
                 entity.setX(entity.getPrevX());
@@ -439,6 +547,26 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
 
 //        System.out.println("status=" + status);
+    }
+
+    private void handlePlayerCommand(ChannelHandlerContext ctx, ByteBuf in) {
+        int entityId = readVarInt(in);
+        int actionId = readVarInt(in);
+        int jumpBoost = readVarInt(in);
+
+        switch (actionId) {
+            case 1 -> { // start sprinting
+                player.setSprinting(true);
+            }
+            case 2 -> { // stop sprinting
+                player.setSprinting(false);
+            }
+            case 6 -> { // start flying with elytra
+                player.setGliding(true);
+            }
+        }
+
+//        System.out.println("actionId=" + actionId);
     }
 
     private void handlePlayerInput(ChannelHandlerContext ctx, ByteBuf in) {
@@ -498,7 +626,9 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         float pitch = in.readFloat();
 
         // right click air
-
+        if (player.getInventory().getItemInMainHand().getType().equals("minecraft:fishing_rod")) {
+            new ClientboundSpawnEntity(globalEntityId.getAndIncrement(), UUID.randomUUID(), "minecraft:fishing_bobber", player.getX(), player.getY(), player.getZ(), 0, 0, 0, 1, 0, 0, 0).send(ctx, protocolVersion);
+        }
         EventBus.getInstance().callEvent(new PlayerInteractEvent(player, ActionType.RIGHT_CLICK_AIR));
     }
 
@@ -539,7 +669,10 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         if (player.getGameMode() == GameMode.ADVENTURE || player.getGameMode() == GameMode.SPECTATOR) return;
         if (player.getInventory().getItemInMainHand() == null) return;
 
-        placeBlock(x, y, z, player.getInventory().getItemInMainHand().getType());
+        int blockId = BlockRegistry.getBlock(player.getInventory().getItemInMainHand().getType(), 772);
+        if (blockId == -1) return;
+
+        placeBlock(x, y, z, blockId);
         new ClientboundAckBlockChange(sequence).send(ctx, protocolVersion);
 
         if (player.getGameMode() != GameMode.SURVIVAL) return;
@@ -569,10 +702,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
         EventBus.getInstance().callEvent(new PlayerCommandEvent(player, command));
 
-        if (command.startsWith("spawn")) {
-            player.teleport(0, 112, 0);
-        }
-
         if (command.startsWith("reload")) {
             if (player.getOpLevel() < 4) {
                 player.sendMessage("Требуется 4 уровень оп для выполнения данной команды!");
@@ -588,6 +717,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 player.sendMessage("Требуется 2 уровень оп для выполнения данной команды!");
                 return;
             }
+            if (command.length() < 8) return;
             String entity = command.substring(7);
             if (!entity.startsWith("minecraft:")) entity = "minecraft:" + entity;
             World.spawnEntityDev(player, entity);
@@ -598,6 +728,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 player.sendMessage("Требуется 2 уровень оп для выполнения данной команды!");
                 return;
             }
+            if (command.length() < 6) return;
 
             command = command.substring(5);
             int openIndex = command.indexOf("[");
@@ -640,6 +771,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 player.sendMessage("Требуется 2 уровень оп для выполнения данной команды!");
                 return;
             }
+            if (command.length() < 6) return;
             try {
                 int entityId = Integer.parseInt(command.substring(5));
                 World.removeEntity(entityId);
@@ -653,11 +785,55 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 player.sendMessage("Требуется 2 уровень оп для выполнения данной команды!");
                 return;
             }
+            if (command.length() < 10) return;
             try {
-                String gamemode = command.substring(9);
-                player.setGamemode(GameMode.valueOf(gamemode.toUpperCase()));
+                String[] args = command.split(" ");
+                if (args.length > 2) {
+                    Player target = World.getPlayer(args[2]);
+                    if (target != null)
+                        target.setGamemode(GameMode.valueOf(args[1].toUpperCase()));
+                    else
+                        player.sendMessage("Игрок не в сети!");
+                    return;
+                }
+                player.setGamemode(GameMode.valueOf(args[1].toUpperCase()));
             } catch (IllegalArgumentException e) {
                 player.sendMessage("Неизвестный режим игры!");
+            }
+        }
+
+        if (command.startsWith("tp")) {
+            if (player.getOpLevel() < 2) {
+                player.sendMessage("Требуется 2 уровень оп для выполнения данной команды!");
+                return;
+            }
+            if (command.length() < 3) return;
+            try {
+                String[] args = command.split(" ");
+                if (args.length > 1) {
+                    Player target = World.getPlayer(args[1]);
+                    if (target != null)
+                        player.teleport(target.getX(), target.getY(), target.getZ(), target.getYaw(), target.getPitch());
+                    else
+                        player.sendMessage("Игрок не в сети!");
+                }
+            } catch (IllegalArgumentException e) {
+                player.sendMessage("Произошла ошибка " + e);
+            }
+        }
+
+        if (command.startsWith("kick")) {
+            if (player.getOpLevel() < 4) {
+                player.sendMessage("Требуется 4 уровень оп для выполнения данной команды!");
+                return;
+            }
+            if (command.length() < 6) return;
+            Player target = World.getPlayer(command.substring(5));
+            if (target != null) {
+                target.kick("Kicked by operator");
+            }
+            else {
+                player.sendMessage("Игрок не в сети!");
             }
         }
 
@@ -666,6 +842,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 player.sendMessage("Требуется 2 уровень оп для выполнения данной команды!");
                 return;
             }
+            if (command.length() < 9) return;
             String json = command.substring(8);
             try {
                 if (!JsonParser.parseString(json).isJsonArray()) {
@@ -679,12 +856,14 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             }
         }
 
-        if (command.equals("fly")) {
+        if (command.equals("clear")) {
             if (player.getOpLevel() < 2) {
                 player.sendMessage("Требуется 2 уровень оп для выполнения данной команды!");
                 return;
             }
-            player.setAllowFlight(!player.isAllowFlight());
+            player.getInventory().clear();
+            player.getInventory().setCarriedItem(null);
+            player.updateInventory(0);
         }
 
         if (command.equals("save-all")) {
@@ -721,8 +900,12 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             return;
         }
 
-        EventBus.getInstance().callEvent(new PlayerChatEvent(player, message));
-        World.broadcast("<username> ".replace("username", player.getUsername()) + message);
+        PlayerChatEvent event = new PlayerChatEvent(player, message);
+        EventBus.getInstance().callEvent(event);
+
+        String finalMessage = event.getStyle();
+
+        World.broadcast(finalMessage);
     }
 
     private void handleInventory(ChannelHandlerContext ctx, ByteBuf in) {
@@ -853,9 +1036,11 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             String[] splitted = c.split("=");
             String componentName = splitted[0].trim();
             if (!componentName.startsWith("minecraft:")) componentName = "minecraft:" + componentName;
-            short value = -1;
+            Object value = "";
             if (!splitted[1].equals("{}"))
-                value = Short.parseShort(splitted[1].trim());
+                value = splitted[1].trim();
+
+            System.out.println("name=" + componentName + " value=" + value);
 
             allComponents.add(new ItemComponent(componentName, value));
         }

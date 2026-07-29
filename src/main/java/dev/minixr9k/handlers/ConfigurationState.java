@@ -1,5 +1,7 @@
 package dev.minixr9k.handlers;
 
+import dev.minixr9k.config.Configuration;
+import dev.minixr9k.packets.confAndPlay.ClientboundResourcepackPush;
 import dev.minixr9k.packets.confAndPlay.serverbound.ServerboundPluginMessage;
 import dev.minixr9k.packets.configuration.ClientboundFinishConfiguration;
 import dev.minixr9k.packets.configuration.ClientboundKnownPacks;
@@ -14,6 +16,9 @@ import dev.minixr9k.utils.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 public class ConfigurationState extends SimpleChannelInboundHandler<ByteBuf> {
 

@@ -11,6 +11,9 @@ public class ItemRegistry {
     public static int getItem(String targetItem, int protocolVersion) {
         String fileName = "items1.21.8.json";
 
+        if (protocolVersion == 774)
+            fileName = "items1.21.11.json";
+
         try (InputStream is = ItemRegistry.class.getResourceAsStream("/item_type/" + fileName)) {
             if (is == null) return 0; // Воздух по дефолту
 

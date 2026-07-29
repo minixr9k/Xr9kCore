@@ -42,6 +42,8 @@ public class ClientboundEntityPositionSync implements MinecraftPacket {
         out.writeDouble(velocityZ);
         out.writeFloat(yaw);
         out.writeFloat(pitch);
+        if (protocolVersion > 772)
+            out.writeInt(0);
         out.writeBoolean(onGround);
     }
 
@@ -52,8 +54,8 @@ public class ClientboundEntityPositionSync implements MinecraftPacket {
 
     @Override
     public int getPacketId(int protocolVersion) {
-        if (protocolVersion == 773)
-            return 0x7D;
+        if (protocolVersion > 772)
+            return 0x7B;
         return 0x1F;
     }
 }

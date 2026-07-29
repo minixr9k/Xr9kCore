@@ -3,6 +3,8 @@ package dev.minixr9k.types;
 import dev.minixr9k.packets.play.ClientboundSetPlayerSlot;
 import io.netty.channel.ChannelHandlerContext;
 
+import java.util.Arrays;
+
 public class Inventory {
 
     private final ChannelHandlerContext ctx;
@@ -48,6 +50,10 @@ public class Inventory {
         slots[slot] = item;
     }
 
+    public void clear() {
+        Arrays.fill(slots, null);
+    }
+
     public ItemStack[] getSlots() {
         return slots;
     }
@@ -66,5 +72,37 @@ public class Inventory {
 
     public void setCarriedItem(ItemStack carriedItem) {
         this.carriedItem = carriedItem;
+    }
+
+    public void setHelmet(ItemStack item) {
+        setItem(5, item);
+    }
+
+    public void setChestplate(ItemStack item) {
+        setItem(6, item);
+    }
+
+    public void setLeggings(ItemStack item) {
+        setItem(7, item);
+    }
+
+    public void setBoots(ItemStack item) {
+        setItem(8, item);
+    }
+
+    public ItemStack getHelmet() {
+        return getItem(5);
+    }
+
+    public ItemStack getChestplate() {
+        return getItem(6);
+    }
+
+    public ItemStack getLeggings() {
+        return getItem(7);
+    }
+
+    public ItemStack getBoots() {
+        return getItem(8);
     }
 }

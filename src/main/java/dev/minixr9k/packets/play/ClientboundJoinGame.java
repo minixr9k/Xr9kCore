@@ -1,6 +1,8 @@
 package dev.minixr9k.packets.play;
 
+import dev.minixr9k.config.Configuration;
 import dev.minixr9k.types.GameMode;
+import dev.minixr9k.types.Player;
 import dev.minixr9k.utils.MinecraftPacket;
 import io.netty.buffer.ByteBuf;
 
@@ -11,8 +13,9 @@ public class ClientboundJoinGame implements MinecraftPacket {
 
     private final GameMode gameMode;
 
-    public ClientboundJoinGame(GameMode gameMode) {
+    public ClientboundJoinGame(GameMode gameMode, Player player) {
         this.gameMode = gameMode;
+        player.setSystemGameMode(gameMode);
     }
 
     @Override
@@ -25,8 +28,8 @@ public class ClientboundJoinGame implements MinecraftPacket {
         writeString(out, "minecraft:overworld");
 
         writeVarInt(out, 10);    // Max Players (unused)
-        writeVarInt(out, 12);     // View Distance
-        writeVarInt(out, 12);     // Simulation Distance
+        writeVarInt(out, Configuration.get().world.renderDistance);     // View Distance
+        writeVarInt(out, Configuration.get().world.simulationDistance);     // Simulation Distance
         out.writeBoolean(false); // Reduced Debug Info
         out.writeBoolean(true);  // Enable Respawn Screen
         out.writeBoolean(false); // Do Limited Crafting
