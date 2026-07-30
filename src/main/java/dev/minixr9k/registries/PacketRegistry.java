@@ -6,6 +6,7 @@ import dev.minixr9k.packets.configuration.serverbound.ServerboundKnownPacksRespo
 import dev.minixr9k.packets.handshake.Handshake;
 import dev.minixr9k.packets.login.serverbound.ServerboundLoginAck;
 import dev.minixr9k.packets.login.serverbound.ServerboundLoginStart;
+import dev.minixr9k.packets.login.serverbound.ServerboundPluginResponse;
 import dev.minixr9k.utils.MinecraftPacket;
 
 import java.util.HashMap;
@@ -21,6 +22,7 @@ public class PacketRegistry {
         handshakePackets.put(0x00, Handshake.class);
 
         loginPackets.put(0x00, ServerboundLoginStart.class);
+        loginPackets.put(0x02, ServerboundPluginResponse.class);
         loginPackets.put(0x03, ServerboundLoginAck.class);
 
         configurationPackets.put(0x02, ServerboundPluginMessage.class);

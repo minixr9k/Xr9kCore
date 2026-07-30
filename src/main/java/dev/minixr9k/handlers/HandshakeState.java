@@ -8,6 +8,7 @@ import dev.minixr9k.api.EventBus;
 import dev.minixr9k.api.event.HandshakeEvent;
 import dev.minixr9k.auth.PlayerProfile;
 import dev.minixr9k.config.Configuration;
+import dev.minixr9k.json.JConfig;
 import dev.minixr9k.packets.beta.handshake.Handshake2Packet;
 import dev.minixr9k.packets.handshake.Handshake;
 import dev.minixr9k.packets.login.ClientboundLoginDisconnect;
@@ -39,7 +40,7 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
 
         int packetLength = in.readableBytes();
 
-        if (packetLength > 256 && !Configuration.get().bungeecord.enabled) {
+        if (packetLength > 256 && !Configuration.get().proxy.enabled) {
             System.out.println("[Xr9kCore] Пакет слишком огромный! (Handshake)");
             ctx.close();
             return;
@@ -62,7 +63,6 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
 
             try {
                 BetaPacket packet = PacketBetaRegistry.handle(packetId);
-                System.out.println("there");
 
                 if (packet != null) {
                     packet.read(in, -1);
@@ -72,7 +72,7 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
                 }
             } catch (Throwable t) {
                 System.err.println("Ошибка при создании или чтении пакета 0x" + Integer.toHexString(packetId));
-                t.printStackTrace(); // <--- Покажет точную причину, почему не дошло до "there"
+                t.printStackTrace();
             }
         }
     }
@@ -84,14 +84,11 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
             int serverPort = ((Handshake) packet).getServerPort();
             int nextState = ((Handshake) packet).getNextState();
 
-//            System.out.printf("[Handshake] Protocol: %d, Address: %s:%d, NextState: %d%n",
-//                    protocolVersion, serverAddress, serverPort, nextState);
-
             EventBus.getInstance().callEvent(new HandshakeEvent(ctx, protocolVersion, serverAddress, serverPort, nextState));
 
             List<PlayerProfile> properties = new ArrayList<>();
 
-            if (Configuration.get().bungeecord.enabled) {
+            if (Configuration.get().proxy.enabled && Configuration.get().proxy.forwardingMode == JConfig.ForwardingMode.BUNGEEGUARD) {
                 if (nextState == 2) {
 
                     boolean authorized = false;
@@ -109,7 +106,7 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
                             if (obj.has("name")) {
                                 if (obj.get("name").getAsString().equals("bungeeguard-token")) {
                                     if (obj.has("value")) {
-                                        if (obj.get("value").getAsString().equals(Configuration.get().bungeecord.token)) {
+                                        if (obj.get("value").getAsString().equals(Configuration.get().proxy.token)) {
                                             authorized = true;
                                         }
                                     }
@@ -123,7 +120,7 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
                         }
                     }
 
-                    if (Configuration.get().bungeecord.token.isEmpty()) {
+                    if (Configuration.get().proxy.token.isEmpty()) {
                         authorized = true;
                     }
 

@@ -95,118 +95,16 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                     if (opLevel > 0) player.setOpLevel(opLevel);
 
                     player.sendGameEvent(13, 0);
-                    player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
+//                    player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
 //                    player.getInventory().setItemHotbar(4, new ItemStack("minecraft:compass", (short) 1, List.of(new ItemComponent("minecraft:custom_name", "[{\"text\": \"Minigames\", \"color\":\"#FF7F50\"}]"))));
                     World.setEquipment(player);
                     player.updateInventory(0);
-//                    spawnDisplayModel(new Vector3f(1, 112, 1));
                 });
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
-    }
-
-    public void spawnDisplayModel(Vector3f pos) {
-        // 1. Спавним основание (block_display)
-        int blockDisplayId = 99;
-
-        new ClientboundSpawnEntity(
-                blockDisplayId,
-                UUID.randomUUID(),
-                "minecraft:block_display",
-                pos.getX() - 0.5, pos.getY() + 0.5, pos.getZ() - 0.5,
-                0, 0, 0, 0, 0, 0, 0
-        ).send(player.getCtx(), protocolVersion);
-
-        ClientboundSetEntityMetadata blockMetadata = new ClientboundSetEntityMetadata(blockDisplayId);
-        int stoneBlockStateId = 0; // ID состояния блока
-        blockMetadata.add(new MetadataEntry<>(23, Metadata.BLOCK_STATE, stoneBlockStateId));
-        blockMetadata.send(player.getCtx(), protocolVersion);
-
-        // Массив для хранения всех ID голов, чтобы потом сделать их пассажирами
-        List<Integer> headIds = new ArrayList<>();
-
-        // Данные для 4 голов из команды /summon
-        HeadData[] headsData = new HeadData[] {
-                // Голова 1 (Aspen055)
-                new HeadData(
-                        "ewogICJ0aW1lc3RhbXAiIDogMTc4NDQ3MDg4NDI1NSwKICAicHJvZmlsZUlkIiA6ICI2NDg4Y2VjMjc4OGQ0MTI2OTk5NWMyMmY4OTdmMzA4OSIsCiAgInByb2ZpbGVOYW1lIiA6ICJBc3BlbjA1NSIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS8zOTQxYTJlNTc4YjRhNmRhNTIyYWQyZmM2YzE5MWU3ZDljYThhMDBjYjc4NzI1YjdhNzBmMmU2NGEwMTU3M2ZkIgogICAgfQogIH0KfQ==",
-                        new Vector3f(0.0f, 0.5f, 0.0f),
-                        new Vector3f(1.0f, 1.0f, 0.1f)
-                ),
-                // Голова 2 (raxitocl)
-                new HeadData(
-                        "ewogICJ0aW1lc3RhbXAiIDogMTc4NDQ3MDg4NzM4MiwKICAicHJvZmlsZUlkIiA6ICJkMTQ4NjFiM2UwZmM0Njk5OTFlMTcyNTllMzdiZjZhZCIsCiAgInByb2ZpbGVOYW1lIiA6ICJyYXhpdG9jbCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS83YTk3OTBhOTc5MDU2MzkwNjhiOTM3MDQ0ZWZhYjJiNWI4MDRhYWFiZTFmOWM4NmMyNmRlZjJhZmQ5MTY2ODJhIgogICAgfQogIH0KfQ==",
-                        new Vector3f(0.0f, 1.0f, 0.0f),
-                        new Vector3f(1.0f, 1.0f, 0.1f)
-                ),
-                // Голова 3 (elnadXB)
-                new HeadData(
-                        "ewogICJ0aW1lc3RhbXAiIDogMTc4NDQ3MDg5MDIzOSwKICAicHJvZmlsZUlkIiA6ICI5MTU1ZmYzNTNlMzc0ZmZlYjE0MmE5NmU2MzU2ZjA4NSIsCiAgInByb2ZpbGVOYW1lIiA6ICJlbG5hZFhCIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzM5Y2VkMGM5OWRlZTU5ODVkMzA5ZGQ2MzI5NmJkNzlmZjdmMjQzNGFiNmExYjU2YTZmYTE5NzIyNzhkYjM5ZjkiCiAgICB9CiAgfQp9",
-                        new Vector3f(-0.3125f, 0.5f, 0.0f),
-                        new Vector3f(0.25f, 1.0f, 0.1f)
-                ),
-                // Голова 4 (1etho)
-                new HeadData(
-                        "ewogICJ0aW1lc3RhbXAiIDogMTc4NDQ3MDg5MjY2NSwKICAicHJvZmlsZUlkIiA6ICI4MjYxOGI1ZjhhMzA0Njg2YTkyMTM2ZDcxZTlhZDkyMSIsCiAgInByb2ZpbGVOYW1lIiA6ICIxZXRobyIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS85MzBmN2RkZDVjZDY3ZDEzMzk0ZjYyMzRiYzkxYWNlYmE1MmFkZTJhMDdlODZiMmM1ZWUwOWJlNTg3ZmJhNSIKICAgIH0KICB9Cn0=",
-                        new Vector3f(-0.3125f, 1.0f, 0.0f),
-                        new Vector3f(0.25f, 1.0f, 0.1f)
-                )
-        };
-
-        // 2. Спавним и настраиваем каждую из 4 голов
-        for (HeadData data : headsData) {
-            int headDisplayId = globalEntityId.getAndIncrement();
-            headIds.add(headDisplayId);
-
-            new ClientboundSpawnEntity(
-                    headDisplayId,
-                    UUID.randomUUID(),
-                    "minecraft:item_display",
-                    pos.getX() - 0.5, pos.getY() + 0.5, pos.getZ() - 0.5,
-                    0, 0, 0, 0, 0, 0, 0
-            ).send(player.getCtx(), protocolVersion);
-
-            ItemStack headItem = new ItemStack(
-                    "minecraft:player_head",
-                    (short) 1,
-                    List.of(new ItemComponent("minecraft:profile", data.textureBase64))
-            );
-
-            ClientboundSetEntityMetadata headMetadata = new ClientboundSetEntityMetadata(headDisplayId);
-
-            // Поле 11: Translation (позиция относительно блока)
-            headMetadata.add(new MetadataEntry<>(11, Metadata.VECTOR3F, data.translation));
-
-            // Поле 12: Scale (размер головы по осям)
-            headMetadata.add(new MetadataEntry<>(12, Metadata.VECTOR3F, data.scale));
-
-            // Поле 23: Предмет
-            headMetadata.add(new MetadataEntry<>(23, Metadata.SLOT, headItem));
-
-            // Поле 24: Item Display Context = NONE (byte 0)
-            headMetadata.add(new MetadataEntry<>(24, Metadata.BYTE, (byte) 0));
-
-            headMetadata.send(player.getCtx(), protocolVersion);
-        }
-
-        new ClientboundSetPassengersList(blockDisplayId, headIds)
-                .send(player.getCtx(), protocolVersion);
-    }
-
-    // Вспомогательный класс-структура для данных головы
-    private static class HeadData {
-        final String textureBase64;
-        final Vector3f translation;
-        final Vector3f scale;
-
-        public HeadData(String textureBase64, Vector3f translation, Vector3f scale) {
-            this.textureBase64 = textureBase64;
-            this.translation = translation;
-            this.scale = scale;
-        }
     }
 
     @Override
@@ -266,7 +164,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         this.keepAliveTickFuture = ctx.executor().scheduleAtFixedRate(() -> {
             this.lastKeepAliveId = System.currentTimeMillis();
             new ClientboundKeepAlive().send(ctx, protocolVersion);
-            player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
+//            player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
             this.keepAlivePending = true;
             this.lastKeepAliveSentTime = System.currentTimeMillis();
         }, 5, 15, TimeUnit.SECONDS);

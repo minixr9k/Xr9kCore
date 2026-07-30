@@ -17,7 +17,7 @@ public class JConfig {
     public MotdConf motd = new MotdConf();
     public WorldConf world = new WorldConf();
     public ResourcePackConf resourcepack = new ResourcePackConf();
-    public BungeecordConf bungeecord = new BungeecordConf();
+    public ProxyConf proxy = new ProxyConf();
     public Location spawnPosition = new Location(0, 112, 0);
     public Map<String, Integer> operators = new HashMap<>();
 
@@ -28,9 +28,15 @@ public class JConfig {
         public String prompt = "";
     }
 
-    public static class BungeecordConf {
+    public static class ProxyConf {
         public boolean enabled = false;
+        public ForwardingMode forwardingMode = ForwardingMode.BUNGEEGUARD;
         public String token = "";
+    }
+
+    public enum ForwardingMode {
+        BUNGEEGUARD,
+        MODERN
     }
 
     public static class MotdConf {

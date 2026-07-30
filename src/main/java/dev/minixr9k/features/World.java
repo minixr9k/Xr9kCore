@@ -23,6 +23,7 @@ public class World {
     private static final List<Entity> entities = new CopyOnWriteArrayList<>();
     private static final Map<String, Chunk> chunks = new ConcurrentHashMap<>();
     public static final AtomicInteger globalEntityId = new AtomicInteger(105);
+    public static final AtomicInteger proxyMessageId = new AtomicInteger(100);
     private static final File WORLD_DIR = new File("world/region");
 
     public static List<int[]> getChunkSpiral(int radius) {
