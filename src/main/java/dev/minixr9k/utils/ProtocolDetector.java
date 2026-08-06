@@ -1,5 +1,6 @@
 package dev.minixr9k.utils;
 
+import dev.minixr9k.config.Configuration;
 import dev.minixr9k.handlers.HandshakeState;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -15,7 +16,7 @@ public class ProtocolDetector extends ByteToMessageDecoder {
 
         int firstByte = in.getUnsignedByte(in.readerIndex());
 
-        if (firstByte == 0x02 || firstByte == 0xFE) {
+        if (firstByte == 0x02 || firstByte == 0xFE && Configuration.get().features.betaSupport) {
             ctx.pipeline().addLast("handler", new HandshakeState(ClientType.LEGACY));
         } else {
             ctx.pipeline().addLast("splitter", new VarIntFrameDecoder());

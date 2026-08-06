@@ -40,8 +40,16 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
 
         int packetLength = in.readableBytes();
 
+        if (packetLength > 2048) {
+            if (Configuration.get().features.debug)
+                System.out.println("[Xr9kCore] Пакет ооооочень огромный! (Handshake)");
+            ctx.close();
+            return;
+        }
+
         if (packetLength > 256 && !Configuration.get().proxy.enabled) {
-            System.out.println("[Xr9kCore] Пакет слишком огромный! (Handshake)");
+            if (Configuration.get().features.debug)
+                System.out.println("[Xr9kCore] Пакет слишком огромный! (Handshake)");
             ctx.close();
             return;
         }
@@ -59,7 +67,6 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
         }
         else {
             int packetId = in.readUnsignedByte();
-            System.out.println("packetid=" + packetId);
 
             try {
                 BetaPacket packet = PacketBetaRegistry.handle(packetId);
@@ -113,7 +120,6 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
                                 }
 
                                 if (obj.has("value") && obj.has("signature")) {
-                                    System.out.println("yeah!");
                                     properties.add(new PlayerProfile("textures", obj.get("value").getAsString(), obj.get("signature").getAsString()));
                                 }
                             }
@@ -135,11 +141,20 @@ public class HandshakeState extends SimpleChannelInboundHandler<ByteBuf> {
                 case 1 -> {
                     ctx.pipeline().replace(this, "handler", new PingState(protocolVersion));
                 }
-                case 2, 3 -> {
+                case 2 -> {
                     ctx.pipeline().replace(this, "handler", new LoginState(protocolVersion, properties));
                 }
+                case 3 -> {
+                    if (Configuration.get().features.acceptTransfers)
+                        ctx.pipeline().replace(this, "handler", new LoginState(protocolVersion, properties));
+                    else {
+                        new ClientboundLoginDisconnect("This server does not accept transfers").send(ctx, protocolVersion);
+                        ctx.close();
+                    }
+                }
                 default -> {
-                    System.out.println("Unknown state requested: " + nextState);
+                    if (Configuration.get().features.debug)
+                        System.out.println("Unknown state requested: " + nextState);
                     ctx.close();
                 }
             }

@@ -14,7 +14,11 @@ public class ClientboundStatusResponse implements MinecraftPacket {
 
     @Override
     public void write(ByteBuf out, int protocolVersion) {
-        String status = "{\"version\":{\"name\":\"MiniCore\",\"protocol\":" + protocolVersion + "},\"players\":{\"max\":" + Configuration.get().motd.maxPlayers + ",\"online\":" + World.getAllPlayers().size() + "},\"description\":{\"text\":\"" + Configuration.get().motd.text + "\"}}";
+        String status = "";
+        if (Configuration.get().features.pingSameProtocol)
+            status = "{\"version\":{\"name\":\"MiniCore\",\"protocol\":" + protocolVersion + "},\"players\":{\"max\":" + Configuration.get().motd.maxPlayers + ",\"online\":" + World.getAllPlayers().size() + "},\"description\":{\"text\":\"" + Configuration.get().motd.text + "\"}}";
+        else
+            status = "{\"version\":{\"name\":\"MiniCore\",\"protocol\":" + Configuration.get().features.mainProtocol + "},\"players\":{\"max\":" + Configuration.get().motd.maxPlayers + ",\"online\":" + World.getAllPlayers().size() + "},\"description\":{\"text\":\"" + Configuration.get().motd.text + "\"}}";
         writeString(out, status);
     }
 

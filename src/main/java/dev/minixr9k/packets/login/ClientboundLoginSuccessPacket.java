@@ -25,6 +25,9 @@ public class ClientboundLoginSuccessPacket implements MinecraftPacket {
 
         if (protocolVersion <= 767)
             out.writeBoolean(false);
+
+        if (protocolVersion >= 776)
+            ProtocolUtils.writeUUID(out, uuid); // session uuid
     }
 
     @Override

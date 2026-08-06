@@ -38,6 +38,10 @@ public class ConfigurationState extends SimpleChannelInboundHandler<ByteBuf> {
             new ClientboundKnownPacks("minecraft", "core", "1.21.10").send(ctx, 1);
         else if (protocolVersion == 774)
             new ClientboundKnownPacks("minecraft", "core", "1.21.11").send(ctx, 1);
+        else if (protocolVersion == 775)
+            new ClientboundKnownPacks("minecraft", "core", "26.1").send(ctx, 1);
+        else if (protocolVersion == 776)
+            new ClientboundKnownPacks("minecraft", "core", "26.2").send(ctx, 1);
     }
 
     @Override

@@ -17,14 +17,14 @@ public class Configuration {
         try (FileReader reader = new FileReader("configuration.json")) {
 
             config = gson.fromJson(reader, JConfig.class);
-            System.out.println("Конфиг успещно загружен!");
+            System.out.println("[Core/Config] Конфиг успещно загружен!");
 
         } catch (FileNotFoundException e) {
-            System.out.println("Конфиг не найден! Создаем новый...");
+            System.out.println("[Core/Config] Конфиг не найден! Создаем новый...");
             config = new JConfig();
             saveConfig();
         } catch (IOException e) {
-            throw new RuntimeException("Ошибка при чтении конфигурации", e);
+            throw new RuntimeException("[Core/Config] Ошибка при чтении конфигурации", e);
         }
     }
 

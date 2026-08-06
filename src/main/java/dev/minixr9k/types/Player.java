@@ -1,6 +1,7 @@
 package dev.minixr9k.types;
 
 import dev.minixr9k.auth.PlayerProfile;
+import dev.minixr9k.features.World;
 import dev.minixr9k.packets.beta.play.ChatMessage3Packet;
 import dev.minixr9k.packets.beta.play.PlayerPositionAndLook13Packet;
 import dev.minixr9k.packets.beta.play.TimeUpdate4Packet;
@@ -28,6 +29,8 @@ public class Player extends Entity {
 
     private int passengerOfEntity = 0;
 
+    private int ping;
+
     private List<PlayerProfile> profile;
     private String brand;
 
@@ -45,6 +48,13 @@ public class Player extends Entity {
             new ChatMessage3Packet(message).send(ctx, protocolVersion);
         else
             new ClientboundSystemMessage(message, false).send(ctx, protocolVersion);
+    }
+
+    public void sendActionBar(String message) {
+        if (protocolVersion <= 99)
+            new ChatMessage3Packet(message).send(ctx, protocolVersion);
+        else
+            new ClientboundSystemMessage(message, true).send(ctx, protocolVersion);
     }
 
     public void teleport(double x, double y, double z) {
@@ -132,18 +142,18 @@ public class Player extends Entity {
         new ClientboundSetHealth(health, food, saturation).send(ctx, protocolVersion);
     }
 
-    public void setFood(int food) {
+    public void setFoodLevel(int food) {
         this.food = food;
         new ClientboundSetHealth(health, food, saturation).send(ctx, protocolVersion);
-    }
-
-    public void setFoodLevel(int food) {
-        setFood(food);
     }
 
     public void setSaturation(int saturation) {
         this.saturation = saturation;
         new ClientboundSetHealth(health, food, saturation).send(ctx, protocolVersion);
+    }
+
+    public void setLocalBlock(String block, int x, int y, int z) {
+        World.setLocalBlock(x, y, z, block, this);
     }
 
     public void setLocalWorldTime(int time, boolean isTimeIncreasing) {
@@ -339,6 +349,14 @@ public class Player extends Entity {
 
     public void setGliding(boolean gliding) {
         isGliding = gliding;
+    }
+
+    public int getPing() {
+        return ping;
+    }
+
+    public void setPing(int ping) {
+        this.ping = ping;
     }
 
 }

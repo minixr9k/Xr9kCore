@@ -12,7 +12,6 @@ public class Xr9kCore {
         PluginLoader.loadPlugins();
         World.initWorld(Configuration.get().world.chunks, Configuration.get().world.grassChunks);
 
-        // 2. Регистрируем автосохранение при выключении процесса
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("[LinearChunkHolder] Выключение сервера... Сохраняем мир...");
             World.saveWorld();

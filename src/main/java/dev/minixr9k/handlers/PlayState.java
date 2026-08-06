@@ -83,7 +83,8 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                     World.addPlayer(player);
                     World.spawnEntities(player);
                     EventBus.getInstance().callEvent(new PlayerJoinEvent(player));
-                    World.broadcast("§e{player} joined the game (id={entityId})".replace("{player}", player.getUsername()).replace("{entityId}", String.valueOf(player.getEntityId())));
+                    if (Configuration.get().features.buildInMessages)
+                        World.broadcast("§e{player} joined the game (id={entityId})".replace("{player}", player.getUsername()).replace("{entityId}", String.valueOf(player.getEntityId())));
 
                     startKeepAliveLoop(ctx);
 
@@ -123,7 +124,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 case 0x08 -> handleChat(ctx, in);
                 case 0x11 -> handleInventory(ctx, in);
                 case 0x15 -> handlePlayerLoaded(ctx, in);
-                case 0x18 -> handleKeepAliveResponse(in);
+                case 0x1B -> handleKeepAliveResponse(in);
                 case 0x19 -> handleInteract(ctx, in);
                 case 0x1D -> handlePosition(ctx, in);
                 case 0x1E -> handlePositionRotation(ctx, in);
@@ -163,6 +164,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
     private void startKeepAliveLoop(ChannelHandlerContext ctx) {
         this.keepAliveTickFuture = ctx.executor().scheduleAtFixedRate(() -> {
             this.lastKeepAliveId = System.currentTimeMillis();
+            EventBus.getInstance().callEvent(new PlayerKeepAliveEvent(player));
             new ClientboundKeepAlive().send(ctx, protocolVersion);
 //            player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
             this.keepAlivePending = true;
@@ -172,14 +174,16 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         this.keepAliveTimeoutFuture = ctx.executor().scheduleAtFixedRate(() -> {
             if (keepAlivePending && (System.currentTimeMillis() - lastKeepAliveSentTime > 30_000)) {
                 this.keepAlivePending = false;
-                System.out.println("[Play] KeepAlive Timeout!");
+                System.out.println("[Xr9kCore/Play] " + player.getUsername() + " disconnected (keepalive timeout)");
                 ctx.close();
             }
         }, 1, 1, TimeUnit.SECONDS);
     }
 
     private void handleKeepAliveResponse(ByteBuf in) {
-        if (in.readLong() == lastKeepAliveId) {
+        long timestamp = in.readLong();
+        player.setPing((int) (System.currentTimeMillis() - timestamp));
+        if (timestamp == lastKeepAliveId) {
             this.keepAlivePending = false;
         }
     }
@@ -403,7 +407,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             player.setY(y);
             player.setZ(z);
 
-            if (deltaY > 0) {
+            if (deltaY > 0 && Configuration.get().features.fixBoatFly) {
                 entity.setX(entity.getPrevX());
                 entity.setY(entity.getPrevY());
                 entity.setZ(entity.getPrevZ());
@@ -428,6 +432,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
         if ((status == 0 && player.getGameMode() == GameMode.CREATIVE)
                 || (status == 2 && player.getGameMode() == GameMode.SURVIVAL)) {
+            EventBus.getInstance().callEvent(new BlockBreakEvent(player, new Block(World.getBlock(x, y, z), new Location(x, y, z))));
             breakBlock(x, y, z);
             new ClientboundAckBlockChange(sequence).send(ctx, protocolVersion);
         }
@@ -442,7 +447,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         else if (status == 6) {
             EventBus.getInstance().callEvent(new PlayerInputEvent(player, InputKey.KEY_F));
         }
-
 
 //        System.out.println("status=" + status);
     }
@@ -570,6 +574,8 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         int blockId = BlockRegistry.getBlock(player.getInventory().getItemInMainHand().getType(), 772);
         if (blockId == -1) return;
 
+        EventBus.getInstance().callEvent(new BlockPlaceEvent(player, new Block(World.getBlock(x, y, z), new Location(x, y, z))));
+
         placeBlock(x, y, z, blockId);
         new ClientboundAckBlockChange(sequence).send(ctx, protocolVersion);
 
@@ -599,6 +605,8 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         in.skipBytes(length);
 
         EventBus.getInstance().callEvent(new PlayerCommandEvent(player, command));
+
+        if (!Configuration.get().features.buildInCommands) return;
 
         if (command.startsWith("reload")) {
             if (player.getOpLevel() < 4) {
@@ -961,7 +969,8 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         }
 
         World.removePlayer(player);
-        World.broadcast("§e{player} quit the game".replace("{player}", player.getUsername()));
+        if (Configuration.get().features.buildInMessages)
+            World.broadcast("§e{player} quit the game".replace("{player}", player.getUsername()));
 //        System.gc();
     }
 

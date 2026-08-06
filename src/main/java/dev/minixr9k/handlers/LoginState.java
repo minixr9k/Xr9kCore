@@ -44,6 +44,7 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         if (protocolVersion < 772) {
+            System.out.println("[Xr9kCore] подключение с версией протокола " + protocolVersion);
             new ClientboundLoginDisconnect("Для подключения используйте версию 1.21.8").send(ctx, protocolVersion);
             ctx.close();
         }
@@ -99,7 +100,7 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
                 SkinCache.put(uuid, properties);
             }
 
-            System.out.println("[Xr9kCore] UUID of player " + username + " is " + uuid);
+            System.out.println("[Xr9kCore/" + protocolVersion + "] UUID of player " + username + " is " + uuid);
 
             new ClientboundLoginSuccessPacket(uuid, username).send(ctx, protocolVersion);
         }
@@ -136,7 +137,8 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
 
                     new ClientboundLoginSuccessPacket(uuid, username).send(ctx, protocolVersion);
                 } catch (Exception e) {
-                    System.err.println("Failed to verify Velocity payload: " + e.getMessage());
+                    if (Configuration.get().features.debug)
+                        System.err.println("Failed to verify Velocity payload: " + e.getMessage());
                     new ClientboundLoginDisconnect("Invalid proxy response").send(ctx, protocolVersion);
                     ctx.close();
                 }

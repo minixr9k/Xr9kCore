@@ -24,7 +24,7 @@ public class NetworkServer {
     public void start() {
         boolean useEpoll = Epoll.isAvailable();
 
-        System.out.println("[Network] Ивент-луп выбран: " + (useEpoll ? "Epoll (Linux Native)" : "NIO (Java)"));
+        System.out.println("[Core/Network] Ивент-луп выбран: " + (useEpoll ? "Epoll (Linux Native)" : "NIO (Java)"));
 
         // 1. Создаем группы потоков в зависимости от ОС
         EventLoopGroup bossGroup = useEpoll ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
@@ -44,7 +44,7 @@ public class NetworkServer {
                     });
 
             ChannelFuture f = b.bind(port).sync();
-            System.out.println("Server bound to port " + port);
+            System.out.println("[Core/Done] Server bound to port " + port);
             f.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();

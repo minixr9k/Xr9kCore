@@ -31,14 +31,14 @@ public class PluginLoader {
             }
         }
 
-        System.out.println("[PluginLoader] Найдено потенциальных плагинов: " + allJarFiles.size());
+        System.out.println("[Core/PluginLoader] Найдено потенциальных плагинов: " + allJarFiles.size());
         if (allJarFiles.isEmpty()) return;
 
         for (File file : allJarFiles) {
             try (JarFile jar = new JarFile(file)) {
                 JarEntry entry = jar.getJarEntry("plugin.yml");
                 if (entry == null) {
-                    System.out.printf("[PluginLoader] %s не содержит plugin.yml!%n", file.getName());
+                    System.out.printf("[Core/PluginLoader] %s не содержит plugin.yml!%n", file.getName());
                     continue;
                 }
 
@@ -56,7 +56,7 @@ public class PluginLoader {
                 }
 
                 if (mainClassPath == null || mainClassPath.isEmpty()) {
-                    System.out.printf("[PluginLoader] %s: В plugin.yml не указан mainClass!%n", file.getName());
+                    System.out.printf("[Core/PluginLoader] %s: В plugin.yml не указан mainClass!%n", file.getName());
                     continue;
                 }
 
@@ -72,7 +72,7 @@ public class PluginLoader {
 
                 // Проверяем, реализует ли этот класс наш интерфейс Plugin
                 if (!Plugin.class.isAssignableFrom(clazz)) {
-                    System.out.printf("[PluginLoader] Главный класс %s не реализует интерфейс Plugin!%n", mainClassPath);
+                    System.out.printf("[Core/PluginLoader] Главный класс %s не реализует интерфейс Plugin!%n", mainClassPath);
                     classLoader.close();
                     continue;
                 }
@@ -85,17 +85,17 @@ public class PluginLoader {
 
                 // Сохраняем в список активных
                 loadedPlugins.add(plugin);
-                System.out.printf("[PluginLoader] Успешно загружен плагин %s%n", file.getName());
+                System.out.printf("[Core/PluginLoader] Успешно загружен плагин %s%n", file.getName());
 
             } catch (Exception e) {
-                System.out.printf("[PluginLoader] Ошибка при загрузке плагина %s: %s%n", file.getName(), e.getMessage());
+                System.out.printf("[Core/PluginLoader] Ошибка при загрузке плагина %s: %s%n", file.getName(), e.getMessage());
                 e.printStackTrace();
             }
         }
     }
 
     public static void disablePlugins() {
-        System.out.println("[PluginLoader] Выключение плагинов...");
+        System.out.println("[Core/PluginLoader] Выключение плагинов...");
         for (Plugin plugin : loadedPlugins) {
             try {
                 plugin.onDisable();

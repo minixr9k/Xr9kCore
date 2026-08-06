@@ -126,6 +126,13 @@ public class World {
         }
     }
 
+    public static void spawnEntityPlayer(int entityId, UUID uuid, String username, Location loc, int actions, List<PlayerProfile> profile, Player viewer) {
+
+        new ClientboundPlayerInfoUpdate(actions, uuid, username, profile).send(viewer.getCtx(), viewer.getProtocolVersion());
+        new ClientboundSpawnEntity(entityId, uuid, "minecraft:player", loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch(), loc.getYaw(), 0, 0, 0, 0).send(viewer.getCtx(), viewer.getProtocolVersion());
+
+    }
+
     public static void removePlayer(Player player) {
         players.remove(player);
         for (Player p : players) {
@@ -200,60 +207,6 @@ public class World {
         }
     }
 
-//    public static void movePlayer(Player player) {
-//        // 1. Рассчитываем дельты движения для формата Майнкрафта (умножаем на 4096)
-//        short deltaX = (short) ((player.getX() - player.getPrevX()) * 4096);
-//        short deltaY = (short) ((player.getY() - player.getPrevY()) * 4096);
-//        short deltaZ = (short) ((player.getZ() - player.getPrevZ()) * 4096);
-//
-//        // Проверяем, изменилась ли позиция и изменился ли поворот
-//        boolean moved = deltaX != 0 || deltaY != 0 || deltaZ != 0;
-//        boolean rotated = player.getYaw() != player.getPrevYaw() || player.getPitch() != player.getPrevPitch();
-//
-//        // Считаем абсолютную дистанцию, чтобы проверить лимит в 8 блоков
-//        double distance = Math.sqrt(Math.pow(player.getX() - player.getPrevX(), 2) +
-//                Math.pow(player.getY() - player.getPrevY(), 2) +
-//                Math.pow(player.getZ() - player.getPrevZ(), 2));
-//
-//        // Переводим углы float в протокольный тип Angle (byte: 0-255)
-//        byte yawAngle = (byte) (player.getYaw() * 256.0F / 360.0F);
-//        byte pitchAngle = (byte) (player.getPitch() * 256.0F / 360.0F);
-//
-//        for (Player p : players) {
-//            // Не шлем пакет самому себе
-//            if (p.getCtx() == player.getCtx()) continue;
-//
-//            if (distance > 8.0) {
-//                // Если игрок прыгнул далеко (или телепортировался), шлем абсолютную синхронизацию (0x23)
-//                new ClientboundEntityPositionSync(
-//                        player.getEntityId(), player.getX(), player.getY(), player.getZ(),
-//                        0, 0, 0, player.getYaw(), player.getPitch(), true
-//                ).send(p.getCtx(), p.getProtocolVersion());
-//            }
-//            else if (moved && rotated) {
-//                // Игрок идет и крутит головой одновременно (0x34)
-//                new ClientboundMoveEntityPosRot(player.getEntityId(), deltaX, deltaY, deltaZ, yawAngle, pitchAngle, true)
-//                        .send(p.getCtx(), p.getProtocolVersion());
-//            }
-//            else if (moved) {
-//                // Игрок просто идет по прямой, не меняя взгляд (0x33)
-//                new ClientboundMoveEntityPos(player.getEntityId(), deltaX, deltaY, deltaZ, true)
-//                        .send(p.getCtx(), p.getProtocolVersion());
-//            }
-//            else if (rotated) {
-//                // Игрок стоит на месте, но крутит мышкой (0x36)
-//                new ClientboundMoveEntityRot(player.getEntityId(), yawAngle, pitchAngle, true)
-//                        .send(p.getCtx(), p.getProtocolVersion());
-//            }
-//
-//            if (rotated)
-//                new ClientboundSetHeadRotation(player.getEntityId(), yawAngle).send(p.getCtx(), p.getProtocolVersion());
-//        }
-//
-//        // В самом конце обновляем "предыдущие" координаты игрока, чтобы в следующий тик дельта считалась верно
-//        player.updatePrevPosition();
-//    }
-
     public static void setPassenger(Player player, int entityId) {
         for (Player p : players) {
             if (p.getCtx() == player.getCtx()) continue;
@@ -268,7 +221,7 @@ public class World {
         for (Player p : players) {
             if (p.getCtx() == player.getCtx()) continue;
             if (p.getProtocolVersion() < 99) {
-                // swing
+                // TODO beta1.7.3 swing
                 continue;
             }
             new ClientboundEntityAnimation(player.getEntityId(), (byte)animation).send(p.getCtx(), p.getProtocolVersion());
@@ -365,6 +318,17 @@ public class World {
         }
     }
 
+    public static void setLocalBlock(int x, int y, int z, String blockType, Player p) {
+        int blockId = BlockRegistry.getBlock(blockType, 772);
+        if (blockId == -1) return;
+
+        if (p.getProtocolVersion() < 99) {
+            new BlockChange53Packet(x, y, z, blockId).send(p.getCtx(), p.getProtocolVersion());
+            return;
+        }
+        new ClientboundBlockUpdate(x, y, z, blockId).send(p.getCtx(), p.getProtocolVersion());
+    }
+
     public static void setEquipment(Player player) {
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item == null) {
@@ -431,6 +395,7 @@ public class World {
     }
 
     public static void generateTree(int x, int y, int z) {
+        // oh
         for (int i = 0; i < 7; i++) {
             if (i < 5)
                 placeBlock(x, y + i, z, 137);

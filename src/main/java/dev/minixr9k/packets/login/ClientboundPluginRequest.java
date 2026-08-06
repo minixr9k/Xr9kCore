@@ -23,6 +23,7 @@ public class ClientboundPluginRequest implements MinecraftPacket {
         writeString(out, channel);
         if (data != null && data.isReadable()) {
             out.writeBytes(data);
+            data.release();
         }
     }
 

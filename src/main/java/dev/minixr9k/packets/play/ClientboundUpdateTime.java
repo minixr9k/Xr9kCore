@@ -5,9 +5,9 @@ import io.netty.buffer.ByteBuf;
 
 public class ClientboundUpdateTime implements MinecraftPacket {
 
-    private long worldAge;
-    private long time;
-    private boolean isTimeIncreasing;
+    private final long worldAge;
+    private final long time;
+    private final boolean isTimeIncreasing;
 
     public ClientboundUpdateTime(long worldAge, long time, boolean isTimeIncreasing) {
         this.worldAge = worldAge;
@@ -17,6 +17,7 @@ public class ClientboundUpdateTime implements MinecraftPacket {
 
     @Override
     public void write(ByteBuf out, int protocolVersion) {
+        // TODO 1.21.11+ format
         out.writeLong(worldAge);
         out.writeLong(time);
         out.writeBoolean(isTimeIncreasing);

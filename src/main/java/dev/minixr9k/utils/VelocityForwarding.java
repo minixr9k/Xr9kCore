@@ -24,6 +24,7 @@ public class VelocityForwarding {
         public List<PlayerProfile> properties = new ArrayList<>();
     }
 
+    // thx https://github.com/Swedz/NeoForged-Velocity-Support
     public static ForwardedData parse(ByteBuf buf, String secret) throws NoSuchAlgorithmException, InvalidKeyException {
         byte[] signature = new byte[32];
         buf.readBytes(signature);

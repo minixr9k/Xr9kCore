@@ -18,6 +18,7 @@ public class JConfig {
     public WorldConf world = new WorldConf();
     public ResourcePackConf resourcepack = new ResourcePackConf();
     public ProxyConf proxy = new ProxyConf();
+    public FeaturesConf features = new FeaturesConf();
     public Location spawnPosition = new Location(0, 112, 0);
     public Map<String, Integer> operators = new HashMap<>();
 
@@ -53,8 +54,17 @@ public class JConfig {
     }
 
     public static class FeaturesConf {
-        public boolean fishing = true;
+        public boolean acceptTransfers = true;
         public boolean worldVoid = true;
+        public boolean debug = false;
+        public boolean buildInCommands = true;
+        public boolean betaSupport = false;
+        public boolean lceSupport = false;
+        public String chunkFormat = "DEV/LINEAR";
+        public int mainProtocol = 772;
+        public boolean fixBoatFly = true;
+        public boolean pingSameProtocol = true;
+        public boolean buildInMessages = true;
     }
 
 }

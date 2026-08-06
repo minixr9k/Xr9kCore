@@ -117,7 +117,7 @@ public class LinearChunkManager {
             System.arraycopy(compressedBytes, 0, finalFileBytes, headerBytes.length, compressedBytes.length);
 
             Files.write(file.toPath(), finalFileBytes);
-            System.out.println("[Linear] Успешно сохранен регион: " + file.getName() + " | Размер: " + finalFileBytes.length + " байт");
+            System.out.println("[Core/World] Успешно сохранен регион: " + file.getName() + " | Размер: " + finalFileBytes.length + " байт");
 
         } finally {
             headerBuf.release();
@@ -205,7 +205,7 @@ public class LinearChunkManager {
             uncompressedBuf.release();
         }
 
-        System.out.println("[Linear] Загружен регион: " + file.getName() + " | Найдено чанков: " + regionChunks.size());
+        System.out.println("[Core/World] Загружен регион: " + file.getName() + " | Найдено чанков: " + regionChunks.size());
         return regionChunks;
     }
 }
