@@ -57,6 +57,25 @@ public class Player extends Entity {
             new ClientboundSystemMessage(message, true).send(ctx, protocolVersion);
     }
 
+    public void sendTitle(String title, String subtitle) {
+        new ClientboundSetTitleText(title).send(ctx, protocolVersion);
+        new ClientboundSetSubTitleText(subtitle).send(ctx, protocolVersion);
+    }
+
+    public void sendTitle(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+        new ClientboundSetTitleText(title).send(ctx, protocolVersion);
+        new ClientboundSetSubTitleText(subtitle).send(ctx, protocolVersion);
+        new ClientboundSetTitleAnimation(fadeIn, stay, fadeOut).send(ctx, protocolVersion);
+    }
+
+    public void clearTitle() {
+        new ClientboundClearTitle(false).send(ctx, protocolVersion);
+    }
+
+    public void resetTitle() {
+        new ClientboundClearTitle(true).send(ctx, protocolVersion);
+    }
+
     public void teleport(double x, double y, double z) {
         this.teleportImmunityTicks = 3;
         this.setX(x);
