@@ -13,7 +13,7 @@ public class Xr9kCore {
         World.initWorld(Configuration.get().world.chunks, Configuration.get().world.grassChunks);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("[LinearChunkHolder] Выключение сервера... Сохраняем мир...");
+            System.out.println("[ChunkHolder] Выключение сервера... Сохраняем мир...");
             World.saveWorld();
         }));
         new NetworkServer(Configuration.get().port).start();

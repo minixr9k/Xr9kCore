@@ -1,7 +1,7 @@
 package dev.minixr9k.features;
 
 import dev.minixr9k.api.chunk.Chunk;
-import dev.minixr9k.api.chunk.LinearChunkManager;
+import dev.minixr9k.api.chunk.ZRegionChunkManager;
 import dev.minixr9k.auth.PlayerProfile;
 import dev.minixr9k.packets.beta.play.*;
 import dev.minixr9k.packets.play.*;
@@ -494,17 +494,16 @@ public class World {
     public static void initWorld(int chunkRadius, int grassRadius) {
         try {
             if (WORLD_DIR.exists() && WORLD_DIR.list().length > 0) {
-                System.out.println("[LinearChunkHolder] Папка сохранений найдена. Загружаем чанки...");
-                Map<String, Chunk> loaded = LinearChunkManager.loadWorld(WORLD_DIR);
-//                Map<String, Chunk> loaded = AnvilChunkManager.loadWorld(WORLD_DIR);
+                System.out.println("[ChunkHolder] Папка сохранений найдена. Загружаем чанки...");
+                Map<String, Chunk> loaded = ZRegionChunkManager.loadWorld(WORLD_DIR);
                 chunks.putAll(loaded);
             } else {
-                System.out.println("[LinearChunkHolder] Сохранения не найдены. Генерируем новый мир...");
+                System.out.println("[ChunkHolder] Сохранения не найдены. Генерируем новый мир...");
                 generateWorld(chunkRadius, grassRadius);
                 saveWorld(); // Сразу сохраним свежесгенерированный
             }
         } catch (IOException e) {
-            System.err.println("[LinearChunkHolder] Ошибка при работе с файлами мира! Генерируем во временную память...");
+            System.err.println("[ChunkHolder] Ошибка при работе с файлами мира! Генерируем во временную память...");
             e.printStackTrace();
             generateWorld(chunkRadius, grassRadius);
         }
@@ -513,12 +512,11 @@ public class World {
     // Сохранить текущее состояние
     public static void saveWorld() {
         try {
-            System.out.println("[LinearChunkHolder] Запуск сохранения чанков в формате Linear...");
-            LinearChunkManager.saveWorld(chunks, WORLD_DIR);
-//            AnvilChunkManager.saveWorld(chunks, WORLD_DIR);
-            System.out.println("[LinearChunkHolder] Мир успешно сохранен!");
+            System.out.println("[ChunkHolder] Запуск сохранения чанков в формате ZRegion...");
+            ZRegionChunkManager.saveWorld(chunks, WORLD_DIR);
+            System.out.println("[ChunkHolder] Мир успешно сохранен!");
         } catch (IOException e) {
-            System.err.println("[LinearChunkHolder] Критическая ошибка при сохранении мира!");
+            System.err.println("[ChunkHolder] Критическая ошибка при сохранении мира!");
             e.printStackTrace();
         }
     }

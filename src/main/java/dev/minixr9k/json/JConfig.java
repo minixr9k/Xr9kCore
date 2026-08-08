@@ -60,7 +60,7 @@ public class JConfig {
         public boolean buildInCommands = true;
         public boolean betaSupport = false;
         public boolean lceSupport = false;
-        public String chunkFormat = "DEV/LINEAR";
+        public String chunkFormat = "DEV/ZREGION";
         public int mainProtocol = 772;
         public boolean fixBoatFly = true;
         public boolean pingSameProtocol = true;

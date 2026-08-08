@@ -777,9 +777,9 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 player.sendMessage("Требуется 4 уровень оп для выполнения данной команды!");
                 return;
             }
-            World.broadcast("[LinearChunkHolder] Сохранение мира...");
+            World.broadcast("[ChunkHolder] Сохранение мира...");
             World.saveWorld();
-            World.broadcast("[LinearChunkHolder] Успешно сохранен!");
+            World.broadcast("[ChunkHolder] Успешно сохранен!");
         }
 
         if (command.equals("tree")) {

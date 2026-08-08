@@ -10,7 +10,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LinearChunkManager {
+public class ZRegionChunkManager {
 
     private static final int REGION_SIZE = 32; // Регион состоит из 32x32 чанков
     private static final int CHUNKS_PER_REGION = REGION_SIZE * REGION_SIZE; // 1024
@@ -38,7 +38,7 @@ public class LinearChunkManager {
             int rx = Integer.parseInt(parts[0]);
             int rz = Integer.parseInt(parts[1]);
 
-            File regionFile = new File(saveDir, "r." + rx + "." + rz + ".linear");
+            File regionFile = new File(saveDir, "r." + rx + "." + rz + ".zregion");
             saveRegion(regionFile, rx, rz, entry.getValue());
         }
     }
@@ -132,7 +132,7 @@ public class LinearChunkManager {
         Map<String, Chunk> loadedChunks = new HashMap<>();
         if (!saveDir.exists()) return loadedChunks;
 
-        File[] files = saveDir.listFiles((dir, name) -> name.startsWith("r.") && name.endsWith(".linear"));
+        File[] files = saveDir.listFiles((dir, name) -> name.startsWith("r.") && name.endsWith(".zregion"));
         if (files == null) return loadedChunks;
 
         for (File file : files) {

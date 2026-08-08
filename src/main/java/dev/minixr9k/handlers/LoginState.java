@@ -75,6 +75,11 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
                 ctx.close();
             }
 
+            if (Configuration.get().motd.maxPlayers > 0 && World.getAllPlayers().size() >= Configuration.get().motd.maxPlayers) {
+                new ClientboundLoginDisconnect("Сервер переполнен!").send(ctx, protocolVersion);
+                ctx.close();
+            }
+
             if (World.getPlayer(username) != null) {
                 new ClientboundLoginDisconnect("Игрок с таким ником уже играет на сервере!").send(ctx, protocolVersion);
                 ctx.close();
