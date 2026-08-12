@@ -130,6 +130,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 case 0x1E -> handlePositionRotation(ctx, in);
                 case 0x1F -> handleRotation(ctx, in);
                 case 0x21 -> handleMoveVehicle(ctx, in);
+                case 0x23 -> handleMiddleClick(ctx, in);
                 case 0x28 -> handlePlayerAction(ctx, in);
                 case 0x29 -> handlePlayerCommand(ctx, in);
                 case 0x2A -> handlePlayerInput(ctx, in);
@@ -138,8 +139,8 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 case 0x3F -> handleUseItemOn(ctx, in);
                 case 0x40 -> handleUseItem(ctx, in);
                 default -> {
-//                    if (packetId != 0xC)
-//                        System.out.println("Unknown packet: " + Integer.toHexString(packetId));
+                    if (Configuration.get().features.debug && packetId != 0xC)
+                        System.out.println("Unknown packet: " + Integer.toHexString(packetId));
                     in.skipBytes(in.readableBytes());
                 }
             }
@@ -418,6 +419,26 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
             World.moveEntity(entity);
         }
+    }
+
+    private void handleMiddleClick(ChannelHandlerContext ctx, ByteBuf in) {
+        long location = in.readLong();
+        boolean includeData = in.readBoolean();
+
+        int x = (int) (location >> 38);
+        int y = (int) ((location << 52) >> 52);
+        int z = (int) ((location << 26) >> 38);
+
+        if (player.getGameMode() != GameMode.CREATIVE) return;
+
+        String type = World.getBlock(x, y, z);
+        int idx = type.indexOf("[");
+        if (idx != -1) {
+            type = type.substring(0, idx);
+        }
+
+        player.getInventory().setItemInMainHand(new ItemStack(type, (short) 1));
+        player.updateInventory(0);
     }
 
     private void handlePlayerAction(ChannelHandlerContext ctx, ByteBuf in) {

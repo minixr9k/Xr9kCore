@@ -41,7 +41,7 @@ public class ClientboundJoinGame implements MinecraftPacket {
         out.writeByte(gameMode.getId());        // Gamemode (1 - Creative)
         out.writeByte(-1);       // Previous Gamemode
         out.writeBoolean(false); // Is Debug
-        out.writeBoolean(false); // Is Flat
+        out.writeBoolean(true); // Is Flat
         out.writeBoolean(false); // Has Death Location
         writeVarInt(out, 0);     // Portal Cooldown
         if (protocolVersion > 767)
