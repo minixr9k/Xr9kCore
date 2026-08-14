@@ -2,10 +2,9 @@ package dev.minixr9k;
 
 import dev.minixr9k.config.Configuration;
 import dev.minixr9k.config.PluginLoader;
-import dev.minixr9k.features.MiniMessage;
 import dev.minixr9k.features.World;
 
-public class Xr9kCore {
+public class MiniCore {
 
     public static void main(String[] args) {
         Configuration.loadConfig();

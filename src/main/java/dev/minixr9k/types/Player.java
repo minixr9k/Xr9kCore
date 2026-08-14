@@ -76,6 +76,18 @@ public class Player extends Entity {
         new ClientboundClearTitle(true).send(ctx, protocolVersion);
     }
 
+    public void playSound(String sound, float volume, float pitch) {
+        new ClientboundSoundEntity(sound, 0, 1, volume, pitch, System.currentTimeMillis()).send(ctx, protocolVersion);
+    }
+
+    public void stopSound(String sound) {
+        new ClientboundStopSound((byte) 2, -1, sound).send(ctx, protocolVersion);
+    }
+
+    public void stopAllSounds() {
+        new ClientboundStopSound((byte) 0, -1, "").send(ctx, protocolVersion);
+    }
+
     public void teleport(double x, double y, double z) {
         this.teleportImmunityTicks = 3;
         this.setX(x);

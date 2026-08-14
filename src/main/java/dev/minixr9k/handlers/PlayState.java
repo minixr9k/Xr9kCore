@@ -100,6 +100,8 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 //                    player.getInventory().setItemHotbar(4, new ItemStack("minecraft:compass", (short) 1, List.of(new ItemComponent("minecraft:custom_name", "[{\"text\": \"Minigames\", \"color\":\"#FF7F50\"}]"))));
                     World.setEquipment(player);
                     player.updateInventory(0);
+
+                    player.playSound("minecraft:music_disc.pigstep", 1.0f, 1.0f);
                 });
 
             } catch (Exception e) {
