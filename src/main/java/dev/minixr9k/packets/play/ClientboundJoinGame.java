@@ -46,7 +46,7 @@ public class ClientboundJoinGame implements MinecraftPacket {
         writeVarInt(out, 0);     // Portal Cooldown
         if (protocolVersion > 767)
             writeVarInt(out, 63);    // Sea Level
-        out.writeBoolean(false); // Enforces Secure Chat
+        out.writeBoolean(true); // Enforces Secure Chat
     }
 
     @Override

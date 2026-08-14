@@ -26,8 +26,25 @@ public class ItemRegistry {
         }
     }
 
+    public static String getItemName(int targetId, int protocolVersion) {
+        String fileName = "items1.21.8.json";
+
+        if (protocolVersion == 774)
+            fileName = "items1.21.11.json";
+
+        try (InputStream is = ItemRegistry.class.getResourceAsStream("/item_type/" + fileName)) {
+            if (is == null) return "minecraft:air";
+
+            try (JsonReader reader = new JsonReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                return findNameInStream(reader, targetId);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "minecraft:air";
+        }
+    }
+
     private static int findIdInStream(JsonReader reader, String targetItem) throws Exception {
-        // Пропускаем обертку до начала объектов
         reader.beginObject();
         while (reader.hasNext()) {
             String name = reader.nextName();
@@ -37,27 +54,22 @@ public class ItemRegistry {
                     String subName = reader.nextName();
                     if (subName.equals("entries")) {
 
-                        // Мы зашли в массив предметов. Ищем нужный нам!
                         reader.beginObject();
                         while (reader.hasNext()) {
                             String itemName = reader.nextName();
 
                             if (itemName.equalsIgnoreCase(targetItem)) {
-                                // Нашли нужный предмет! Заходим внутрь его свойств
                                 reader.beginObject();
                                 while (reader.hasNext()) {
                                     String prop = reader.nextName();
                                     if (prop.equals("protocol_id")) {
                                         int id = reader.nextInt();
-                                        return id; // Нашли! Выходим, закрывая стрим
+                                        return id;
                                     } else {
                                         reader.skipValue();
                                     }
                                 }
                             } else {
-                                // Это не тот предмет, который мы ищем.
-                                // skipValue() мгновенно пропускает весь внутренний блок предмета
-                                // без создания Java-объектов в куче (Heap)
                                 reader.skipValue();
                             }
                         }
@@ -73,7 +85,47 @@ public class ItemRegistry {
         }
         reader.endObject();
 
-        return 0; // Если не нашли — возвращаем воздух
+        return 0;
+    }
+
+    private static String findNameInStream(JsonReader reader, int targetId) throws Exception {
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if (name.equals("minecraft:item")) {
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    String subName = reader.nextName();
+                    if (subName.equals("entries")) {
+                        reader.beginObject();
+                        while (reader.hasNext()) {
+                            String itemName = reader.nextName();
+                            reader.beginObject();
+                            while (reader.hasNext()) {
+                                String prop = reader.nextName();
+                                if (prop.equals("protocol_id")) {
+                                    int id = reader.nextInt();
+                                    if (id == targetId) {
+                                        return itemName; // Нашли! Возвращаем название
+                                    }
+                                } else {
+                                    reader.skipValue();
+                                }
+                            }
+                            reader.endObject();
+                        }
+                        reader.endObject();
+                    } else {
+                        reader.skipValue();
+                    }
+                }
+                reader.endObject();
+            } else {
+                reader.skipValue();
+            }
+        }
+        reader.endObject();
+        return "minecraft:air"; // Если не нашли
     }
 
 }

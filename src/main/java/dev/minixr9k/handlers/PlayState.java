@@ -12,6 +12,7 @@ import dev.minixr9k.features.World;
 import dev.minixr9k.packets.confAndPlay.ClientboundResourcepackPush;
 import dev.minixr9k.packets.play.*;
 import dev.minixr9k.registries.BlockRegistry;
+import dev.minixr9k.registries.ItemRegistry;
 import dev.minixr9k.types.*;
 import dev.minixr9k.utils.Requests;
 import io.netty.buffer.ByteBuf;
@@ -100,8 +101,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 //                    player.getInventory().setItemHotbar(4, new ItemStack("minecraft:compass", (short) 1, List.of(new ItemComponent("minecraft:custom_name", "[{\"text\": \"Minigames\", \"color\":\"#FF7F50\"}]"))));
                     World.setEquipment(player);
                     player.updateInventory(0);
-
-                    player.playSound("minecraft:music_disc.pigstep", 1.0f, 1.0f);
                 });
 
             } catch (Exception e) {
@@ -137,6 +136,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 case 0x29 -> handlePlayerCommand(ctx, in);
                 case 0x2A -> handlePlayerInput(ctx, in);
                 case 0x34 -> handleSetHotbarSlot(ctx, in);
+                case 0x37 -> handleSetCreativeModeSlot(ctx, in);
                 case 0x3C -> handleSwingArm(ctx, in);
                 case 0x3F -> handleUseItemOn(ctx, in);
                 case 0x40 -> handleUseItem(ctx, in);
@@ -532,6 +532,29 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         World.setEquipment(player);
     }
 
+    private void handleSetCreativeModeSlot(ChannelHandlerContext ctx, ByteBuf in) {
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            in.skipBytes(in.readableBytes());
+            return;
+        }
+
+        short slot = in.readShort();
+        if (slot != -1) {
+
+            int count = readVarInt(in); // item count
+            if (count != 0) {
+                int itemId = readVarInt(in); // item id
+
+                boolean add = in.readBoolean(); // components to add
+                boolean rem = in.readBoolean(); // components to remove
+
+                String itemName = ItemRegistry.getItemName(itemId, protocolVersion);
+
+                player.getInventory().setItem(slot, new ItemStack(itemName, (short) count));
+            }
+        }
+    }
+
     private void handleSwingArm(ChannelHandlerContext ctx, ByteBuf in) {
         int hand = readVarInt(in);
 
@@ -824,7 +847,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
         in.skipBytes(in.readableBytes());
 
-        if (message.contains("§")) {
+        if (message.contains("§") && Configuration.get().features.illegalCharactersCheck) {
             player.kick("Illegal characters");
             return;
         }
@@ -833,6 +856,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         EventBus.getInstance().callEvent(event);
 
         String finalMessage = event.getStyle();
+        if (finalMessage.isEmpty()) return;
 
         World.broadcast(finalMessage);
     }
@@ -940,11 +964,13 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             switch (button) {
                 case 0 -> {
                     // q
-                    System.out.println("q");
+                    if (Configuration.get().features.debug)
+                        System.out.println("q");
                 }
                 case 1 -> {
                     // ctrl + q
-                    System.out.println("ctrl q");
+                    if (Configuration.get().features.debug)
+                        System.out.println("ctrl q");
                 }
             }
         }

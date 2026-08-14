@@ -44,7 +44,8 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         if (protocolVersion < 772) {
-            System.out.println("[Xr9kCore] подключение с версией протокола " + protocolVersion);
+            if (Configuration.get().features.debug)
+                System.out.println("[Core] подключение с версией протокола " + protocolVersion);
             new ClientboundLoginDisconnect("Для подключения используйте версию 1.21.8").send(ctx, protocolVersion);
             ctx.close();
         }
@@ -105,7 +106,7 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
                 SkinCache.put(uuid, properties);
             }
 
-            System.out.println("[Xr9kCore/" + protocolVersion + "] UUID of player " + username + " is " + uuid);
+            System.out.println("[Core/" + protocolVersion + "] UUID of player " + username + " is " + uuid);
 
             new ClientboundLoginSuccessPacket(uuid, username).send(ctx, protocolVersion);
         }
@@ -138,7 +139,7 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
                         SkinCache.put(uuid, forwardedData.properties);
                     }
 
-                    System.out.println("[Xr9kCore/Velocity] UUID of player " + player.getUsername() + " is " + player.getUuid());
+                    System.out.println("[Core/Velocity] UUID of player " + player.getUsername() + " is " + player.getUuid());
 
                     new ClientboundLoginSuccessPacket(uuid, username).send(ctx, protocolVersion);
                 } catch (Exception e) {

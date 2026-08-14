@@ -69,7 +69,7 @@ public class ConfigurationState extends SimpleChannelInboundHandler<ByteBuf> {
         }
         else if (packet instanceof ServerboundPluginMessage) {
             if (((ServerboundPluginMessage) packet).getChannel().equals("minecraft:brand")) {
-                System.out.println("[Xr9kCore] " + player.getUsername() + " using " + ((ServerboundPluginMessage) packet).getData());
+                System.out.println("[Core/Brand] " + player.getUsername() + " using " + ((ServerboundPluginMessage) packet).getData());
                 player.setBrand(((ServerboundPluginMessage) packet).getData());
             }
         }

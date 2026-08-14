@@ -63,6 +63,7 @@ public class JConfig {
         public String chunkFormat = "DEV/ZREGION";
         public int mainProtocol = 772;
         public boolean fixBoatFly = true;
+        public boolean illegalCharactersCheck = true;
         public boolean pingSameProtocol = true;
         public boolean buildInMessages = true;
     }

@@ -18,4 +18,14 @@ public class MiniCore {
         new NetworkServer(Configuration.get().port).start();
     }
 
+    // TODO
+    public static void getScheduler() {
+
+    }
+
+    // TODO
+    public static void shutdown() {
+
+    }
+
 }

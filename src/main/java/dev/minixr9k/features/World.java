@@ -180,7 +180,7 @@ public class World {
     }
 
     public static void broadcast(String message) {
-        System.out.println(message);
+        System.out.println("[In-game/Chat] " + message);
         for (Player player : players) {
             player.sendMessage(message);
         }
