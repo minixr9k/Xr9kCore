@@ -101,6 +101,8 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 //                    player.getInventory().setItemHotbar(4, new ItemStack("minecraft:compass", (short) 1, List.of(new ItemComponent("minecraft:custom_name", "[{\"text\": \"Minigames\", \"color\":\"#FF7F50\"}]"))));
                     World.setEquipment(player);
                     player.updateInventory(0);
+
+                    new ClientboundCommands(List.of()).send(ctx, protocolVersion);
                 });
 
             } catch (Exception e) {
@@ -455,7 +457,16 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
         if ((status == 0 && player.getGameMode() == GameMode.CREATIVE)
                 || (status == 2 && player.getGameMode() == GameMode.SURVIVAL)) {
-            EventBus.getInstance().callEvent(new BlockBreakEvent(player, new Block(World.getBlock(x, y, z), new Location(x, y, z))));
+
+            BlockBreakEvent event = new BlockBreakEvent(player, new Block(World.getBlock(x, y, z), new Location(x, y, z)));
+            EventBus.getInstance().callEvent(event);
+
+            if (event.isCancelled()) {
+                new ClientboundAckBlockChange(sequence).send(ctx, protocolVersion);
+                player.updateInventory(0);
+                return;
+            }
+
             breakBlock(x, y, z);
             new ClientboundAckBlockChange(sequence).send(ctx, protocolVersion);
         }
@@ -620,7 +631,15 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         int blockId = BlockRegistry.getBlock(player.getInventory().getItemInMainHand().getType(), 772);
         if (blockId == -1) return;
 
-        EventBus.getInstance().callEvent(new BlockPlaceEvent(player, new Block(World.getBlock(x, y, z), new Location(x, y, z))));
+        BlockPlaceEvent event = new BlockPlaceEvent(player, new Block(World.getBlock(x, y, z), new Location(x, y, z)));
+
+        EventBus.getInstance().callEvent(event);
+
+        if (event.isCancelled()) {
+            new ClientboundAckBlockChange(sequence).send(ctx, protocolVersion);
+            player.updateInventory(0);
+            return;
+        }
 
         placeBlock(x, y, z, blockId);
         new ClientboundAckBlockChange(sequence).send(ctx, protocolVersion);
