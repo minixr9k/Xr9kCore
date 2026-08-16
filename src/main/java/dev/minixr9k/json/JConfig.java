@@ -57,6 +57,7 @@ public class JConfig {
         public boolean acceptTransfers = true;
         public boolean worldVoid = true;
         public boolean debug = false;
+        public boolean logCommands = true;
         public boolean buildInCommands = true;
         public boolean betaSupport = false;
         public boolean lceSupport = false;

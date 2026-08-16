@@ -14,6 +14,7 @@ import dev.minixr9k.packets.play.*;
 import dev.minixr9k.registries.BlockRegistry;
 import dev.minixr9k.registries.ItemRegistry;
 import dev.minixr9k.types.*;
+import dev.minixr9k.types.actions.MoveType;
 import dev.minixr9k.utils.Requests;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -144,7 +145,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 case 0x40 -> handleUseItem(ctx, in);
                 default -> {
                     if (Configuration.get().features.debug && packetId != 0xC)
-                        System.out.println("Unknown packet: " + Integer.toHexString(packetId));
+                        System.out.println("[Core/Debug] Unknown packet: " + Integer.toHexString(packetId));
                     in.skipBytes(in.readableBytes());
                 }
             }
@@ -179,7 +180,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         this.keepAliveTimeoutFuture = ctx.executor().scheduleAtFixedRate(() -> {
             if (keepAlivePending && (System.currentTimeMillis() - lastKeepAliveSentTime > 30_000)) {
                 this.keepAlivePending = false;
-                System.out.println("[Xr9kCore/Play] " + player.getUsername() + " disconnected (keepalive timeout)");
+                System.out.println("[Core/Play] " + player.getUsername() + " disconnected (keepalive timeout)");
                 ctx.close();
             }
         }, 1, 1, TimeUnit.SECONDS);
@@ -195,17 +196,18 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
     private void handleTeleport(ByteBuf in) {
         int id = readVarInt(in);
-//        System.out.println("Teleport confirmed! id=" + id);
+        if (Configuration.get().features.debug)
+            System.out.println("[Core/Debug] Teleport confirmed! id=" + id);
     }
 
     private void handleChangeGamemode(ByteBuf in) {
         int gamemode = readVarInt(in);
         if (player.getOpLevel() < 2) return;
         switch(gamemode) {
-            case 0 -> player.setGamemode(GameMode.SURVIVAL);
-            case 1 -> player.setGamemode(GameMode.CREATIVE);
-            case 2 -> player.setGamemode(GameMode.ADVENTURE);
-            case 3 -> player.setGamemode(GameMode.SPECTATOR);
+            case 0 -> player.setGameMode(GameMode.SURVIVAL);
+            case 1 -> player.setGameMode(GameMode.CREATIVE);
+            case 2 -> player.setGameMode(GameMode.ADVENTURE);
+            case 3 -> player.setGameMode(GameMode.SPECTATOR);
         }
     }
 
@@ -224,7 +226,13 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 
         boolean isSneaking = in.readBoolean();
 
-        EventBus.getInstance().callEvent(new PlayerInteractEntityEvent(player, entityId, type, isSneaking));
+        PlayerInteractEntityEvent event = new PlayerInteractEntityEvent(player, entityId, type, isSneaking);
+
+        EventBus.getInstance().callEvent(event);
+
+        if (event.isCancelled()) {
+            return;
+        }
 
         if (type == 1) {
             Player p = World.getPlayer(entityId);
@@ -247,26 +255,33 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         byte flags = in.readByte();
 
         // timer detection
-        long now = System.currentTimeMillis();
-        long timeDiff = now - lastPacketTime;
-        lastPacketTime = now;
-
-        // Переводим прошедшее время в "игровые тики" (1 тик = 50 мс)
-        double ticksEarned = timeDiff / 50.0;
-        // Пополняем баланс, но ЖЕСТКО ограничиваем его сверху MAX_TIMER_BUFFER.
-        // Если игрок стоял 2 секунды, ticksEarned будет 40, но запишется максимум 10.
-        this.timerBalance = Math.min(MAX_TIMER_BUFFER, this.timerBalance + ticksEarned);
-        this.timerBalance -= 1.0;
-
-        // Если пакеты идут слишком быстро, timerBalance быстро уйдет в минус
-        if (this.timerBalance < MIN_TIMER_BALANCE && anticheat) {
-            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-            this.timerBalance = MIN_TIMER_BALANCE + 1;
-            return;
-        }
+//        long now = System.currentTimeMillis();
+//        long timeDiff = now - lastPacketTime;
+//        lastPacketTime = now;
+//
+//        // Переводим прошедшее время в "игровые тики" (1 тик = 50 мс)
+//        double ticksEarned = timeDiff / 50.0;
+//        // Пополняем баланс, но ЖЕСТКО ограничиваем его сверху MAX_TIMER_BUFFER.
+//        // Если игрок стоял 2 секунды, ticksEarned будет 40, но запишется максимум 10.
+//        this.timerBalance = Math.min(MAX_TIMER_BUFFER, this.timerBalance + ticksEarned);
+//        this.timerBalance -= 1.0;
+//
+//        // Если пакеты идут слишком быстро, timerBalance быстро уйдет в минус
+//        if (this.timerBalance < MIN_TIMER_BALANCE && anticheat) {
+//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+//            this.timerBalance = MIN_TIMER_BALANCE + 1;
+//            return;
+//        }
         // timer detection -end-
 
-        EventBus.getInstance().callEvent(new PlayerMoveEvent(player, x, y, z, player.getYaw(), player.getPitch()));
+        PlayerMoveEvent event = new PlayerMoveEvent(player, x, y, z, player.getYaw(), player.getPitch(), flags == 0x01, MoveType.POSITION);
+
+        EventBus.getInstance().callEvent(event);
+
+        if (event.isCancelled()) {
+            player.teleport(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+            return;
+        }
 
 //        if (player.getTeleportImmunityTicks() > 0) {
 //            player.decreaseImmunity();
@@ -312,26 +327,33 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         byte flags = in.readByte();
 
         // timer detection
-        long now = System.currentTimeMillis();
-        long timeDiff = now - lastPacketTime;
-        lastPacketTime = now;
-
-        // Переводим прошедшее время в "игровые тики" (1 тик = 50 мс)
-        double ticksEarned = timeDiff / 50.0;
-        // Пополняем баланс, но ЖЕСТКО ограничиваем его сверху MAX_TIMER_BUFFER.
-        // Если игрок стоял 2 секунды, ticksEarned будет 40, но запишется максимум 10.
-        this.timerBalance = Math.min(MAX_TIMER_BUFFER, this.timerBalance + ticksEarned);
-        this.timerBalance -= 1.0;
-
-        // Если пакеты идут слишком быстро, timerBalance быстро уйдет в минус
-        if (this.timerBalance < MIN_TIMER_BALANCE && anticheat) {
-            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-            this.timerBalance = MIN_TIMER_BALANCE + 1;
-            return;
-        }
+//        long now = System.currentTimeMillis();
+//        long timeDiff = now - lastPacketTime;
+//        lastPacketTime = now;
+//
+//        // Переводим прошедшее время в "игровые тики" (1 тик = 50 мс)
+//        double ticksEarned = timeDiff / 50.0;
+//        // Пополняем баланс, но ЖЕСТКО ограничиваем его сверху MAX_TIMER_BUFFER.
+//        // Если игрок стоял 2 секунды, ticksEarned будет 40, но запишется максимум 10.
+//        this.timerBalance = Math.min(MAX_TIMER_BUFFER, this.timerBalance + ticksEarned);
+//        this.timerBalance -= 1.0;
+//
+//        // Если пакеты идут слишком быстро, timerBalance быстро уйдет в минус
+//        if (this.timerBalance < MIN_TIMER_BALANCE && anticheat) {
+//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+//            this.timerBalance = MIN_TIMER_BALANCE + 1;
+//            return;
+//        }
         // timer detection -end-
 
-        EventBus.getInstance().callEvent(new PlayerMoveEvent(player, x, y, z, yaw, pitch));
+        PlayerMoveEvent event = new PlayerMoveEvent(player, x, y, z, yaw, pitch, flags == 0x01, MoveType.POSITION_ROTATION);
+
+        EventBus.getInstance().callEvent(event);
+
+        if (event.isCancelled()) {
+            player.teleport(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+            return;
+        }
 
 //        if (player.getTeleportImmunityTicks() > 0) {
 //            player.decreaseImmunity();
@@ -377,7 +399,14 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         float pitch = in.readFloat();
         byte flags = in.readByte();
 
-        EventBus.getInstance().callEvent(new PlayerMoveEvent(player, player.getX(), player.getY(), player.getZ(), yaw, pitch));
+        PlayerMoveEvent event = new PlayerMoveEvent(player, player.getX(), player.getY(), player.getZ(), yaw, pitch, flags == 0x01, MoveType.ROTATION);
+
+        EventBus.getInstance().callEvent(event);
+
+        if (event.isCancelled()) {
+            player.teleport(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+            return;
+        }
 
         player.setYaw(yaw);
         player.setPitch(pitch);
@@ -585,9 +614,9 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         float pitch = in.readFloat();
 
         // right click air
-        if (player.getInventory().getItemInMainHand().getType().equals("minecraft:fishing_rod")) {
-            new ClientboundSpawnEntity(globalEntityId.getAndIncrement(), UUID.randomUUID(), "minecraft:fishing_bobber", player.getX(), player.getY(), player.getZ(), 0, 0, 0, 1, 0, 0, 0).send(ctx, protocolVersion);
-        }
+//        if (player.getInventory().getItemInMainHand().getType().equals("minecraft:fishing_rod")) {
+//            new ClientboundSpawnEntity(globalEntityId.getAndIncrement(), UUID.randomUUID(), "minecraft:fishing_bobber", player.getX(), player.getY(), player.getZ(), 0, 0, 0, 1, 0, 0, 0).send(ctx, protocolVersion);
+//        }
         EventBus.getInstance().callEvent(new PlayerInteractEvent(player, ActionType.RIGHT_CLICK_AIR));
     }
 
@@ -661,6 +690,10 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
     private void handleCommand(ChannelHandlerContext ctx, ByteBuf in) {
         int length = readVarInt(in);
 
+        if (Configuration.get().features.debug) {
+            System.out.println("[Core/Debug] recv command packet, length=" + length);
+        }
+
         if (length > 256) {
             in.skipBytes(length);
             return;
@@ -670,6 +703,9 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         in.skipBytes(length);
 
         EventBus.getInstance().callEvent(new PlayerCommandEvent(player, command));
+
+        if (Configuration.get().features.logCommands)
+            System.out.println("[In-game/Chat] " + player.getUsername() + " использует /" + command);
 
         if (!Configuration.get().features.buildInCommands) return;
 
@@ -762,12 +798,12 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 if (args.length > 2) {
                     Player target = World.getPlayer(args[2]);
                     if (target != null)
-                        target.setGamemode(GameMode.valueOf(args[1].toUpperCase()));
+                        target.setGameMode(GameMode.valueOf(args[1].toUpperCase()));
                     else
                         player.sendMessage("Игрок не в сети!");
                     return;
                 }
-                player.setGamemode(GameMode.valueOf(args[1].toUpperCase()));
+                player.setGameMode(GameMode.valueOf(args[1].toUpperCase()));
             } catch (IllegalArgumentException e) {
                 player.sendMessage("Неизвестный режим игры!");
             }
@@ -887,6 +923,15 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         byte button = in.readByte();
         int mode = readVarInt(in);
         in.skipBytes(in.readableBytes());
+
+        InventoryClickEvent event = new InventoryClickEvent(player, windowId, stateId, slot, button, mode);
+
+        EventBus.getInstance().callEvent(event);
+
+        if (event.isCancelled()) {
+            player.updateInventory(stateId);
+            return;
+        }
 
         if (mode == 0) {
             switch (button) {
@@ -1039,28 +1084,11 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         World.removePlayer(player);
         if (Configuration.get().features.buildInMessages)
             World.broadcast("§e{player} quit the game".replace("{player}", player.getUsername()));
-//        System.gc();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
-    }
-
-    private static long getRssMemory() {
-        try {
-            Process process = Runtime.getRuntime().exec(new String[]{"sh", "-c",
-                    "ps -o rss= -p " + ProcessHandle.current().pid()});
-            try (java.util.Scanner s = new java.util.Scanner(process.getInputStream())) {
-                if (s.hasNext()) {
-                    long rss = s.nextLong(); // в килобайтах
-                    return rss / 1024; // в мегабайтах
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1;
     }
 }

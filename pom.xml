@@ -72,12 +72,6 @@
             <artifactId>zstd-jni</artifactId>
             <version>1.5.6-3</version>
         </dependency>
-        <dependency>
-            <groupId>org.cloudburstmc</groupId>
-            <artifactId>nbt</artifactId>
-            <version>3.0.3.Final</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
 </project>

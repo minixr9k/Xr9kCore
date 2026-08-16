@@ -126,10 +126,10 @@ public class World {
         }
     }
 
-    public static void spawnEntityPlayer(int entityId, UUID uuid, String username, Location loc, int actions, List<PlayerProfile> profile, Player viewer) {
+    public static void spawnEntityPlayer(int entityId, UUID uuid, String username, Location loc, int actions, List<PlayerProfile> profile, Player observer) {
 
-        new ClientboundPlayerInfoUpdate(actions, uuid, username, profile).send(viewer.getCtx(), viewer.getProtocolVersion());
-        new ClientboundSpawnEntity(entityId, uuid, "minecraft:player", loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch(), loc.getYaw(), 0, 0, 0, 0).send(viewer.getCtx(), viewer.getProtocolVersion());
+        new ClientboundPlayerInfoUpdate(actions, uuid, username, profile).send(observer.getCtx(), observer.getProtocolVersion());
+        new ClientboundSpawnEntity(entityId, uuid, "minecraft:player", loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch(), loc.getYaw(), 0, 0, 0, 0).send(observer.getCtx(), observer.getProtocolVersion());
 
     }
 
@@ -457,6 +457,14 @@ public class World {
             new ClientboundSpawnEntity(entityId, entityUUID, entityType, player.getX(), player.getY(), player.getZ(), 180, 0, 180, 0, 0, 0, 0).send(p.getCtx(), p.getProtocolVersion());
         }
         return entity;
+    }
+
+    public static void hidePlayer(Player player, Player observer) {
+
+    }
+
+    public static void showPlayer(Player player, Player observer) {
+
     }
 
     public static Player findNearablePlayer(double x, double y, double z) {

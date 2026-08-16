@@ -71,6 +71,10 @@ public class LoginState extends SimpleChannelInboundHandler<ByteBuf> {
             String username = ((ServerboundLoginStart) packet).getUsername();
             UUID uuid = ((ServerboundLoginStart) packet).getUuid();
 
+            if (uuid.toString().equals("00000000-0000-0000-0000-000000000000")) {
+                uuid = UUID.nameUUIDFromBytes(username.getBytes(StandardCharsets.UTF_8));
+            }
+
             if (username.length() < 3 || username.length() > 16) {
                 new ClientboundLoginDisconnect("Слишком длинный либо короткий ник").send(ctx, protocolVersion);
                 ctx.close();

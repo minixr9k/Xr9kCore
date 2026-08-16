@@ -150,7 +150,16 @@ public class Player extends Entity {
         new ClientboundSyncPlayerPos(0, x, y, z, yaw, pitch).send(ctx, protocolVersion);
     }
 
+    @Deprecated(forRemoval = true)
     public void setGamemode(GameMode gamemode) {
+        this.gameMode = gamemode;
+
+        setAllowFlight(gamemode == GameMode.CREATIVE || gamemode == GameMode.SPECTATOR);
+
+        new ClientboundGameEvent(3, gamemode.getId()).send(ctx, protocolVersion);
+    }
+
+    public void setGameMode(GameMode gamemode) {
         this.gameMode = gamemode;
 
         setAllowFlight(gamemode == GameMode.CREATIVE || gamemode == GameMode.SPECTATOR);
