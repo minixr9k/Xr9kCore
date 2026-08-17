@@ -25,7 +25,7 @@ public class SoundRegistry {
     }
 
     private static int findIdInStream(JsonReader reader, String targetEntity) throws Exception {
-        int pigId = 0; // Резервный ID свиньи на случай, если нужная сущность не найдена
+        int pigId = -1; // Резервный ID свиньи на случай, если нужная сущность не найдена
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -43,9 +43,6 @@ public class SoundRegistry {
                             if (entityName.equalsIgnoreCase(targetEntity)) {
                                 // Нашли нужную сущность — мгновенно возвращаем ID!
                                 return readProtocolId(reader);
-                            } else if (entityName.equalsIgnoreCase("minecraft:ui.button.click")) {
-                                // Запоминаем ID свиньи для фоллбека и переходим к следующей сущности
-                                pigId = readProtocolId(reader);
                             } else {
                                 // Пропускаем чужие сущности без создания объектов в памяти
                                 reader.skipValue();

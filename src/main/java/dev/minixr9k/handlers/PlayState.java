@@ -39,13 +39,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
     private long lastKeepAliveId;
     private boolean keepAlivePending = false;
 
-    private final boolean anticheat = Configuration.get().anticheat;
-    private double timerBalance = 10.0;
-    private long lastPacketTime = System.currentTimeMillis();
-
-    private final double MAX_TIMER_BUFFER = 10.0;
-    private final double MIN_TIMER_BALANCE = 7.72;
-
     private java.util.concurrent.ScheduledFuture<?> keepAliveTickFuture;
     private java.util.concurrent.ScheduledFuture<?> keepAliveTimeoutFuture;
 
@@ -254,26 +247,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         double z = in.readDouble();
         byte flags = in.readByte();
 
-        // timer detection
-//        long now = System.currentTimeMillis();
-//        long timeDiff = now - lastPacketTime;
-//        lastPacketTime = now;
-//
-//        // Переводим прошедшее время в "игровые тики" (1 тик = 50 мс)
-//        double ticksEarned = timeDiff / 50.0;
-//        // Пополняем баланс, но ЖЕСТКО ограничиваем его сверху MAX_TIMER_BUFFER.
-//        // Если игрок стоял 2 секунды, ticksEarned будет 40, но запишется максимум 10.
-//        this.timerBalance = Math.min(MAX_TIMER_BUFFER, this.timerBalance + ticksEarned);
-//        this.timerBalance -= 1.0;
-//
-//        // Если пакеты идут слишком быстро, timerBalance быстро уйдет в минус
-//        if (this.timerBalance < MIN_TIMER_BALANCE && anticheat) {
-//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-//            this.timerBalance = MIN_TIMER_BALANCE + 1;
-//            return;
-//        }
-        // timer detection -end-
-
         PlayerMoveEvent event = new PlayerMoveEvent(player, x, y, z, player.getYaw(), player.getPitch(), flags == 0x01, MoveType.POSITION);
 
         EventBus.getInstance().callEvent(event);
@@ -282,33 +255,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             player.teleport(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
             return;
         }
-
-//        if (player.getTeleportImmunityTicks() > 0) {
-//            player.decreaseImmunity();
-//            player.setX(x);
-//            player.setY(y);
-//            player.setZ(z);
-//            player.setOnGround(flags == 0x01);
-//            World.movePlayer(player);
-//            return;
-//        }
-//
-//        double deltaY = y - player.getY();
-//        // speed
-//        double dx = x - player.getX();
-//        double dz = z - player.getZ();
-//        double distanceSq = dx * dx + dz * dz;
-//        if (distanceSq > 15) {
-//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-//            return;
-//        }
-//        // speed -end-
-//
-//        if (deltaY > 0.42 && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE
-//        && player.getGameMode() != GameMode.SPECTATOR && player.isLoaded() && !player.isOnGround()) {
-//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-//            return;
-//        }
 
         player.setX(x);
         player.setY(y);
@@ -326,26 +272,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
         float pitch = in.readFloat();
         byte flags = in.readByte();
 
-        // timer detection
-//        long now = System.currentTimeMillis();
-//        long timeDiff = now - lastPacketTime;
-//        lastPacketTime = now;
-//
-//        // Переводим прошедшее время в "игровые тики" (1 тик = 50 мс)
-//        double ticksEarned = timeDiff / 50.0;
-//        // Пополняем баланс, но ЖЕСТКО ограничиваем его сверху MAX_TIMER_BUFFER.
-//        // Если игрок стоял 2 секунды, ticksEarned будет 40, но запишется максимум 10.
-//        this.timerBalance = Math.min(MAX_TIMER_BUFFER, this.timerBalance + ticksEarned);
-//        this.timerBalance -= 1.0;
-//
-//        // Если пакеты идут слишком быстро, timerBalance быстро уйдет в минус
-//        if (this.timerBalance < MIN_TIMER_BALANCE && anticheat) {
-//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-//            this.timerBalance = MIN_TIMER_BALANCE + 1;
-//            return;
-//        }
-        // timer detection -end-
-
         PlayerMoveEvent event = new PlayerMoveEvent(player, x, y, z, yaw, pitch, flags == 0x01, MoveType.POSITION_ROTATION);
 
         EventBus.getInstance().callEvent(event);
@@ -354,35 +280,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             player.teleport(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
             return;
         }
-
-//        if (player.getTeleportImmunityTicks() > 0) {
-//            player.decreaseImmunity();
-//            player.setX(x);
-//            player.setY(y);
-//            player.setZ(z);
-//            player.setYaw(yaw);
-//            player.setPitch(pitch);
-//            player.setOnGround(flags == 0x01);
-//            World.movePlayer(player);
-//            return;
-//        }
-//
-//        double deltaY = y - player.getY();
-//        // speed
-//        double dx = x - player.getX();
-//        double dz = z - player.getZ();
-//        double distanceSq = dx * dx + dz * dz;
-//        if (distanceSq > 15) {
-//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-//            return;
-//        }
-//        // speed -end-
-//
-//        if (deltaY > 0.42 && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE
-//                && player.getGameMode() != GameMode.SPECTATOR && player.isLoaded() && !player.isOnGround()) {
-//            player.teleportBack(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-//            return;
-//        }
 
         player.setX(x);
         player.setY(y);

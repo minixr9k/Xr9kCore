@@ -4,6 +4,7 @@ import dev.minixr9k.registries.SoundRegistry;
 import dev.minixr9k.utils.MinecraftPacket;
 import io.netty.buffer.ByteBuf;
 
+import static dev.minixr9k.utils.ProtocolUtils.writeString;
 import static dev.minixr9k.utils.ProtocolUtils.writeVarInt;
 
 public class ClientboundSoundEntity implements MinecraftPacket {
@@ -28,6 +29,10 @@ public class ClientboundSoundEntity implements MinecraftPacket {
     public void write(ByteBuf out, int protocolVersion) {
         int soundId = SoundRegistry.getSound(sound, protocolVersion) + 1;
         writeVarInt(out, soundId);
+        if (soundId == 0) {
+            writeString(out, sound);
+            out.writeBoolean(false);
+        }
         writeVarInt(out, category);
         writeVarInt(out, entityId);
         out.writeFloat(volume);

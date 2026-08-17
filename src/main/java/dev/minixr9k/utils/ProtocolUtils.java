@@ -40,6 +40,12 @@ public class ProtocolUtils {
         out.writeByte(value);
     }
 
+    public static void writeNBTString(ByteBuf buf, String value) {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        buf.writeShort(bytes.length);
+        buf.writeBytes(bytes);
+    }
+
     public static void writeString(ByteBuf out, String str) {
         byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
         writeVarInt(out, bytes.length);
