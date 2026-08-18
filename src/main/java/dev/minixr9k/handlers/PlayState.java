@@ -15,6 +15,10 @@ import dev.minixr9k.registries.BlockRegistry;
 import dev.minixr9k.registries.ItemRegistry;
 import dev.minixr9k.types.*;
 import dev.minixr9k.types.actions.MoveType;
+import dev.minixr9k.types.dialog.ActionButton;
+import dev.minixr9k.types.dialog.Dialog;
+import dev.minixr9k.types.dialog.DialogType;
+import dev.minixr9k.types.dialog.PlainMessage;
 import dev.minixr9k.utils.Requests;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -91,8 +95,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                     if (opLevel > 0) player.setOpLevel(opLevel);
 
                     player.sendGameEvent(13, 0);
-//                    player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
-//                    player.getInventory().setItemHotbar(4, new ItemStack("minecraft:compass", (short) 1, List.of(new ItemComponent("minecraft:custom_name", "[{\"text\": \"Minigames\", \"color\":\"#FF7F50\"}]"))));
                     World.setEquipment(player);
                     player.updateInventory(0);
 
@@ -136,6 +138,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 case 0x3C -> handleSwingArm(ctx, in);
                 case 0x3F -> handleUseItemOn(ctx, in);
                 case 0x40 -> handleUseItem(ctx, in);
+                case 0x41 -> handleCustomClickAction(ctx, in);
                 default -> {
                     if (Configuration.get().features.debug && packetId != 0xC)
                         System.out.println("[Core/Debug] Unknown packet: " + Integer.toHexString(packetId));
@@ -165,7 +168,6 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
             this.lastKeepAliveId = System.currentTimeMillis();
             EventBus.getInstance().callEvent(new PlayerKeepAliveEvent(player));
             new ClientboundKeepAlive().send(ctx, protocolVersion);
-//            player.sendTabList("\n  (=^-ω-^=)   \n", "\n\n   §7RAM Usage: {usage}MB   \n§7Hosting: aeza.net".replace("{usage}", String.valueOf(getRssMemory())));
             this.keepAlivePending = true;
             this.lastKeepAliveSentTime = System.currentTimeMillis();
         }, 5, 15, TimeUnit.SECONDS);
@@ -515,6 +517,13 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
 //            new ClientboundSpawnEntity(globalEntityId.getAndIncrement(), UUID.randomUUID(), "minecraft:fishing_bobber", player.getX(), player.getY(), player.getZ(), 0, 0, 0, 1, 0, 0, 0).send(ctx, protocolVersion);
 //        }
         EventBus.getInstance().callEvent(new PlayerInteractEvent(player, ActionType.RIGHT_CLICK_AIR));
+    }
+
+    private void handleCustomClickAction(ChannelHandlerContext ctx, ByteBuf in) {
+        String action = readString(in);
+        in.skipBytes(in.readableBytes());
+
+        EventBus.getInstance().callEvent(new CustomActionEvent(player, action));
     }
 
     private void handleUseItemOn(ChannelHandlerContext ctx, ByteBuf in) {

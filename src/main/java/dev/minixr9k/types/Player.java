@@ -7,6 +7,7 @@ import dev.minixr9k.packets.beta.play.PlayerPositionAndLook13Packet;
 import dev.minixr9k.packets.beta.play.TimeUpdate4Packet;
 import dev.minixr9k.packets.confAndPlay.ClientboundDisconnect;
 import dev.minixr9k.packets.play.*;
+import dev.minixr9k.types.dialog.Dialog;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.util.List;
@@ -86,6 +87,26 @@ public class Player extends Entity {
 
     public void stopAllSounds() {
         new ClientboundStopSound((byte) 0, -1, "").send(ctx, protocolVersion);
+    }
+
+    public void showDialog(Dialog dialog) {
+        new ClientboundShowDialog(dialog).send(ctx, protocolVersion);
+    }
+
+    public void closeDialog() {
+        new ClientboundClearDialog().send(ctx, protocolVersion);
+    }
+
+    public void addPotionEffect(String effect, int duration, int amplifier) {
+        new ClientboundEntityEffect(1, effect, amplifier, duration, (byte) 0x00).send(ctx, protocolVersion);
+    }
+
+    public void addPotionEffect(String effect, int duration, int amplifier, byte flags) {
+        new ClientboundEntityEffect(1, effect, amplifier, duration, flags).send(ctx, protocolVersion);
+    }
+
+    public void removePotionEffect(String effect) {
+        new ClientboundRemoveEffect(1, effect).send(ctx, protocolVersion);
     }
 
     public void teleport(double x, double y, double z) {
