@@ -21,7 +21,7 @@ public class ClientboundJoinGame implements MinecraftPacket {
     @Override
     public void write(ByteBuf out, int protocolVersion) {
         out.writeInt(1);         // Entity ID
-        out.writeBoolean(true); // Hardcore
+        out.writeBoolean(Configuration.get().hardcore); // Hardcore
 
         // Список миров
         writeVarInt(out, 1);
@@ -41,7 +41,7 @@ public class ClientboundJoinGame implements MinecraftPacket {
         out.writeByte(gameMode.getId());        // Gamemode (1 - Creative)
         out.writeByte(-1);       // Previous Gamemode
         out.writeBoolean(false); // Is Debug
-        out.writeBoolean(true); // Is Flat
+        out.writeBoolean(Configuration.get().world.flatType); // Is Flat
         out.writeBoolean(false); // Has Death Location
         writeVarInt(out, 0);     // Portal Cooldown
         if (protocolVersion > 767)

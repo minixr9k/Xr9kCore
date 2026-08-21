@@ -74,7 +74,9 @@ public class ClientboundPlayerInfoUpdate implements MinecraftPacket {
         // 6. Update Display Name (0x20) - пропускаем в простом варианте
         if ((actionsMask & 0x20) != 0) {
             // null - нет отображаемого имени
-            out.writeByte(0); // Префикс 0 для Optional
+//            out.writeByte(0); // Префикс 0 для Optional
+            out.writeBoolean(true);
+            writeTextComponent(out, playerName);
         }
 
         // 7. Update List Priority (0x40) - пропускаем в простом варианте

@@ -8,9 +8,12 @@ import dev.minixr9k.packets.beta.play.TimeUpdate4Packet;
 import dev.minixr9k.packets.confAndPlay.ClientboundDisconnect;
 import dev.minixr9k.packets.play.*;
 import dev.minixr9k.types.dialog.Dialog;
+import dev.minixr9k.types.hud.HudMode;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Player extends Entity {
 
@@ -34,6 +37,9 @@ public class Player extends Entity {
 
     private List<PlayerProfile> profile;
     private String brand;
+
+    private HudMode hudMode = HudMode.SHOW;
+    private final Map<String, Long> cooldowns = new ConcurrentHashMap<>();
 
     private ChannelHandlerContext ctx;
     private int protocolVersion;
@@ -109,6 +115,27 @@ public class Player extends Entity {
         new ClientboundRemoveEffect(1, effect).send(ctx, protocolVersion);
     }
 
+    public void setCooldown(String material, int ticks) {
+        long endTime = System.currentTimeMillis() + (ticks * 50L);
+        cooldowns.put(material, endTime);
+
+        new ClientboundSetCooldown(material, ticks).send(ctx, protocolVersion);
+    }
+
+    public boolean hasCooldown(String material) {
+        cleanCooldowns();
+
+        Long endTime = cooldowns.get(material);
+        if (endTime == null) return false;
+
+        return System.currentTimeMillis() < endTime;
+    }
+
+    private void cleanCooldowns() {
+        long now = System.currentTimeMillis();
+        cooldowns.entrySet().removeIf(entry -> entry.getValue() <= now);
+    }
+
     public void teleport(double x, double y, double z) {
         this.teleportImmunityTicks = 3;
         this.setX(x);
@@ -182,15 +209,28 @@ public class Player extends Entity {
 
     public void setGameMode(GameMode gamemode) {
         this.gameMode = gamemode;
+        hudMode = HudMode.SHOW;
 
         setAllowFlight(gamemode == GameMode.CREATIVE || gamemode == GameMode.SPECTATOR);
 
         new ClientboundGameEvent(3, gamemode.getId()).send(ctx, protocolVersion);
     }
 
-    public void setVisualGamemode() {
-        new ClientboundGameEvent(3, GameMode.CREATIVE.getId()).send(ctx, protocolVersion);
-        setAllowFlight(true);
+    public void setHud(HudMode hudMode) {
+        this.hudMode = hudMode;
+        // отключает полоски хп, голод, броню
+        if (hudMode == HudMode.HIDE_STATS) {
+            new ClientboundGameEvent(3, GameMode.CREATIVE.getId()).send(ctx, protocolVersion);
+            new ClientboundPlayerAbilities((byte) 0x00, 0.05f, 0.1f).send(ctx, protocolVersion);
+        }
+        // отключает весь hud (как в f1)
+        else if (hudMode == HudMode.HIDE_ALL) {
+            new ClientboundGameEvent(3, GameMode.SPECTATOR.getId()).send(ctx, protocolVersion);
+            new ClientboundPlayerAbilities((byte) 0x00, 0.05f, 0.1f).send(ctx, protocolVersion);
+        }
+        else {
+            setGameMode(gameMode);
+        }
     }
 
     public void setHealth(int health) {
@@ -288,7 +328,12 @@ public class Player extends Entity {
         isAllowFlight = allowFlight;
         if (allowFlight)
             new ClientboundPlayerAbilities((byte) 0x04, 0.05f, 0.1f).send(ctx, protocolVersion);
-        else
+        else {
+            if (hudMode != HudMode.SHOW) {
+                setHud(hudMode);
+                return;
+            }
+
             switch (this.gameMode) {
                 case ADVENTURE -> {
                     new ClientboundGameEvent(3, 2).send(ctx, protocolVersion);
@@ -303,6 +348,7 @@ public class Player extends Entity {
                     new ClientboundGameEvent(3, 3).send(ctx, protocolVersion);
                 }
             }
+        }
     }
 
     public boolean isFlying() {
@@ -313,7 +359,12 @@ public class Player extends Entity {
         isFlying = flying;
         if (flying)
             new ClientboundPlayerAbilities((byte) 0x02, 0.05f, 0.1f).send(ctx, protocolVersion);
-        else
+        else {
+            if (hudMode != HudMode.SHOW) {
+                setHud(hudMode);
+                return;
+            }
+
             switch (this.gameMode) {
                 case ADVENTURE -> {
                     new ClientboundGameEvent(3, 2).send(ctx, protocolVersion);
@@ -328,6 +379,7 @@ public class Player extends Entity {
                     new ClientboundGameEvent(3, 3).send(ctx, protocolVersion);
                 }
             }
+        }
     }
 
     public void updateInventory(int stateId) {

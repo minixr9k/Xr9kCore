@@ -10,6 +10,7 @@ public class JConfig {
     public int port = 25565;
     public GameMode gameMode = GameMode.SURVIVAL;
     public boolean forceGameMode = false;
+    public boolean hardcore = false;
     public int time = 8000;
     public boolean isTimeIncreasing = false;
     public boolean anticheat = true;
@@ -51,6 +52,7 @@ public class JConfig {
         public int grassChunks = 2;
         public int renderDistance = 12;
         public int simulationDistance = 12;
+        public boolean flatType = true;
     }
 
     public static class FeaturesConf {
@@ -58,6 +60,7 @@ public class JConfig {
         public boolean worldVoid = true;
         public boolean debug = false;
         public boolean logCommands = true;
+        public boolean logBrand = true;
         public boolean buildInCommands = true;
         public boolean betaSupport = false;
         public boolean lceSupport = false;

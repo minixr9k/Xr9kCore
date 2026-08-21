@@ -15,10 +15,8 @@ import dev.minixr9k.registries.BlockRegistry;
 import dev.minixr9k.registries.ItemRegistry;
 import dev.minixr9k.types.*;
 import dev.minixr9k.types.actions.MoveType;
-import dev.minixr9k.types.dialog.ActionButton;
-import dev.minixr9k.types.dialog.Dialog;
-import dev.minixr9k.types.dialog.DialogType;
-import dev.minixr9k.types.dialog.PlainMessage;
+import dev.minixr9k.types.hud.HudMode;
+import dev.minixr9k.types.team.Team;
 import dev.minixr9k.utils.Requests;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -55,9 +53,7 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
     public void handlerAdded(ChannelHandlerContext ctx) {
         new ClientboundJoinGame(Configuration.get().gameMode, player).send(ctx, protocolVersion);
 
-        int chunkRadius = Configuration.get().world.chunks;
-
-        sendChunks(ctx, protocolVersion, chunkRadius);
+        sendChunks(ctx, protocolVersion, Configuration.get().world.chunks);
 
         String resourcePack = Configuration.get().resourcepack.url;
         String resourcePackSha1 = Configuration.get().resourcepack.sha1;
@@ -690,6 +686,28 @@ public class PlayState extends SimpleChannelInboundHandler<ByteBuf> {
                 World.removeEntity(entityId);
             } catch (Exception e) {
                 player.sendMessage("Введите айди сущности!");
+            }
+        }
+
+        if (command.startsWith("hud")) {
+            if (player.getOpLevel() < 2) {
+                player.sendMessage("Требуется 2 уровень оп для выполнения данной команды!");
+                return;
+            }
+            if (command.length() < 4) return;
+            try {
+                int hudId = Integer.parseInt(command.substring(4));
+                if (hudId == 1) {
+                    player.setHud(HudMode.HIDE_STATS);
+                }
+                else if (hudId == 2) {
+                    player.setHud(HudMode.HIDE_ALL);
+                }
+                else {
+                    player.setHud(HudMode.SHOW);
+                }
+            } catch (Exception e) {
+                player.sendMessage("Введите айди hud!");
             }
         }
 

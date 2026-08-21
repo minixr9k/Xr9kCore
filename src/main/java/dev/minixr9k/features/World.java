@@ -168,7 +168,7 @@ public class World {
                 if (item == null) {
                     item = new ItemStack(null, (short) 0);
                 }
-                new ClientboundSetEquipment(p.getEntityId(), 0, new ItemStack(item.getType(), item.getCount())).send(player.getCtx(), player.getProtocolVersion());
+                new ClientboundSetEquipment(p.getEntityId(), 0, new ItemStack(item.getType(), item.getCount(), item.getComponents())).send(player.getCtx(), player.getProtocolVersion());
             }
         }
     }
@@ -336,7 +336,7 @@ public class World {
         }
         for (Player p : players) {
             if (p.getCtx() == player.getCtx()) continue;
-            new ClientboundSetEquipment(player.getEntityId(), 0, new ItemStack(item.getType(), item.getCount())).send(p.getCtx(), p.getProtocolVersion());
+            new ClientboundSetEquipment(player.getEntityId(), 0, new ItemStack(item.getType(), item.getCount(), item.getComponents())).send(p.getCtx(), p.getProtocolVersion());
         }
     }
 

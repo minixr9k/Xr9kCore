@@ -2,6 +2,7 @@ package dev.minixr9k.handlers;
 
 import dev.minixr9k.config.Configuration;
 import dev.minixr9k.packets.confAndPlay.ClientboundResourcepackPush;
+import dev.minixr9k.packets.confAndPlay.ClientboundUpdateTags;
 import dev.minixr9k.packets.confAndPlay.serverbound.ServerboundPluginMessage;
 import dev.minixr9k.packets.configuration.ClientboundFinishConfiguration;
 import dev.minixr9k.packets.configuration.ClientboundKnownPacks;
@@ -18,6 +19,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 public class ConfigurationState extends SimpleChannelInboundHandler<ByteBuf> {
@@ -69,7 +71,8 @@ public class ConfigurationState extends SimpleChannelInboundHandler<ByteBuf> {
         }
         else if (packet instanceof ServerboundPluginMessage) {
             if (((ServerboundPluginMessage) packet).getChannel().equals("minecraft:brand")) {
-                System.out.println("[Core/Brand] " + player.getUsername() + " using " + ((ServerboundPluginMessage) packet).getData());
+                if (Configuration.get().features.logBrand)
+                    System.out.println("[Core/Brand] " + player.getUsername() + " using " + ((ServerboundPluginMessage) packet).getData());
                 player.setBrand(((ServerboundPluginMessage) packet).getData());
             }
         }
